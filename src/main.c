@@ -1,41 +1,123 @@
 /**
  *@file main.c
- *@brief Register Level Programming Simple Blink Project
- *@include main.c
+ *@brief Register Level Programming Simple Blink Project using FreeRTOS delayUntil
  **/
 
 #include <stdint.h>
+#include <stddef.h>
 #include "stm32f4xx.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #define MODER_WIDTH 2
-#define pin5 5
 
+/* FreeRTOS runtime / linker symbols */
+uint32_t SystemCoreClock = 16000000UL; /* Required by FreeRTOS port.c for tick timer setup */
 
-void wait_ms(int time){
-    for(int i = 0; i < time; i++){
-        for(int j = 0; j < 1600; j++);
+/* FreeRTOS hooks */
+void vApplicationIdleHook(void) { }
+void vApplicationTickHook(void) { }
+
+void vApplicationMallocFailedHook(void) {
+    taskDISABLE_INTERRUPTS();
+    for(;;) { }
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+    (void)xTask;
+    (void)pcTaskName;
+    taskDISABLE_INTERRUPTS();
+    for(;;) { }
+}
+
+/* libc minimal helpers */
+void *memcpy(void *dest, const void *src, size_t n) {
+    unsigned char *d = dest;
+    const unsigned char *s = src;
+    while (n--) *d++ = *s++;
+    return dest;
+}
+
+void *memset(void *s, int c, size_t n) {
+    unsigned char *p = s;
+    while (n--) *p++ = (unsigned char)c;
+    return s;
+}
+
+/* Blink task toggles PD12 every 100 ms using vTaskDelayUntil */
+static void BlinkTask_100ms(void *pvParameters) {
+    (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(100);
+
+    for(;;) {
+        GPIOD->ODR ^= (1 << 12);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+    }
+}
+
+/* Blink task toggles PD13 every 500 ms using vTaskDelayUntil */
+static void BlinkTask_500ms(void *pvParameters) {
+    (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(500);
+
+    for(;;) {
+        GPIOD->ODR ^= (1 << 13);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+    }
+}
+
+/* Blink task toggles PD14 every 1000 ms using vTaskDelayUntil */
+static void BlinkTask_1000ms(void *pvParameters) {
+    (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(1000);
+
+    for(;;) {
+        GPIOD->ODR ^= (1 << 14);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+    }
+}
+
+/* Blink task toggles PD15 every 2000 ms using vTaskDelayUntil */
+static void BlinkTask_2000ms(void *pvParameters) {
+    (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(2000);
+
+    for(;;) {
+        GPIOD->ODR ^= (1 << 15);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+    }
+}
+
+/* Hardware setup for GPIOD pins PD12..PD15 */
+static void prvSetupHardware(void) {
+    RCC->AHB1ENR |= (1 << 3); // enable GPIOD clock
+
+    for (uint32_t pin = 12; pin <= 15; pin++) {
+        GPIOD->MODER &= ~(3 << (pin * MODER_WIDTH)); // reset mode
+        GPIOD->MODER |=  (1 << (pin * MODER_WIDTH)); // set as output
     }
 }
 
 /**
- *@brief Main entry point for blinking project.
- *
- *GPIOA Peripherals are configured to OUTPUT, with LED connected to PA5 being toggled every 100ms
+ *@brief Main entry point
  **/
-int main(void){
+int main(void) {
 
-    //Enable Clock to GPIOD Peripheral by writing 1 to AHB1ENR Bitfield of RCC
-    RCC->AHB1ENR |= (1 << 3);
-    
-    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER &= ~(3 << (12 * MODER_WIDTH));
-    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER |=  (1 << (12 * MODER_WIDTH));
-    
-    for(;;){
-        // Toggle PA5
-        GPIOD->ODR ^= (1 << 12);
-        // Wait for 100ms
-        wait_ms(100);
-    }
+    prvSetupHardware();
+
+    // Create separate blink tasks
+    xTaskCreate(BlinkTask_100ms,  "Blink_100ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(BlinkTask_500ms,  "Blink_500ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(BlinkTask_1000ms, "Blink_1000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(BlinkTask_2000ms, "Blink_2000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Start scheduler
+    vTaskStartScheduler();
+
+    for(;;) { } // should never reach here
 }
