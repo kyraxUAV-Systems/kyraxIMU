@@ -1,9 +1,7 @@
 /**
  *@file main.c
- *@brief Register Level Programming Simple Blink Project
- *@include main.c
+ *@brief Register Level Programming Simple Blink Project using FreeRTOS delayUntil
  **/
-
 
 #include <stdint.h>
 #include <stddef.h>
@@ -13,18 +11,18 @@
 #include "task.h"
 
 #define MODER_WIDTH 2
-#define pin5 5
 
 /* FreeRTOS runtime / linker symbols */
 uint32_t SystemCoreClock = 16000000UL; /* Required by FreeRTOS port.c for tick timer setup */
 
-void vApplicationIdleHook(void) { } /* required by configUSE_IDLE_HOOK */
-void vApplicationTickHook(void) { } /* optional, currently no action */
+/* FreeRTOS hooks */
+void vApplicationIdleHook(void) { }
+void vApplicationTickHook(void) { }
 
 void vApplicationMallocFailedHook(void) {
     taskDISABLE_INTERRUPTS();
     for(;;) { }
-} /* required if configUSE_MALLOC_FAILED_HOOK is enabled or to avoid weak unresolved symbols */
+}
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
     (void)xTask;
@@ -33,8 +31,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
     for(;;) { }
 }
 
-/* libc helpers needed by FreeRTOS components (queue/stream buffer etc.).
-   Because this is bare-metal and -nostdlib is used, we provide minimal definitions. */ 
+/* libc minimal helpers */
 void *memcpy(void *dest, const void *src, size_t n) {
     unsigned char *d = dest;
     const unsigned char *s = src;
@@ -48,96 +45,79 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
-
-/* Blink task toggles PD12 every 100 ms using FreeRTOS delay. */
+/* Blink task toggles PD12 every 100 ms using vTaskDelayUntil */
 static void BlinkTask_100ms(void *pvParameters) {
     (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(100);
+
     for(;;) {
-        GPIOD->ODR ^= (1 << 12); // toggle LED on PD12
-        vTaskDelay(pdMS_TO_TICKS(100));
+        GPIOD->ODR ^= (1 << 12);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
 }
 
-
-/* Blink task toggles PD13 every 500 ms using FreeRTOS delay. */
+/* Blink task toggles PD13 every 500 ms using vTaskDelayUntil */
 static void BlinkTask_500ms(void *pvParameters) {
     (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(500);
+
     for(;;) {
-        GPIOD->ODR ^= (1 << 13); // toggle LED on PD13
-        vTaskDelay(pdMS_TO_TICKS(500));
+        GPIOD->ODR ^= (1 << 13);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
 }
 
-/* Blink task toggles PD14 every 1000 ms using FreeRTOS delay. */
+/* Blink task toggles PD14 every 1000 ms using vTaskDelayUntil */
 static void BlinkTask_1000ms(void *pvParameters) {
     (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(1000);
+
     for(;;) {
-        GPIOD->ODR ^= (1 << 14); // toggle LED on PD14
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        GPIOD->ODR ^= (1 << 14);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
 }
 
-/* Blink task toggles PD15 every 2000 ms using FreeRTOS delay. */
+/* Blink task toggles PD15 every 2000 ms using vTaskDelayUntil */
 static void BlinkTask_2000ms(void *pvParameters) {
     (void)pvParameters;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(2000);
+
     for(;;) {
-        GPIOD->ODR ^= (1 << 15); // toggle LED on PD15
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        GPIOD->ODR ^= (1 << 15);
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
 }
 
+/* Hardware setup for GPIOD pins PD12..PD15 */
+static void prvSetupHardware(void) {
+    RCC->AHB1ENR |= (1 << 3); // enable GPIOD clock
 
-
-static void prvSetupHardware(void)
-{
-    //Enable Clock to GPIOD Peripheral by writing 1 to AHB1ENR Bitfield of RCC
-    RCC->AHB1ENR |= (1 << 3);
-    
-    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER &= ~(3 << (12 * MODER_WIDTH));
-    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER |=  (1 << (12 * MODER_WIDTH));
-
-    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER &= ~(3 << (13 * MODER_WIDTH));
-    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER |=  (1 << (13 * MODER_WIDTH));
-
-    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER &= ~(3 << (14 * MODER_WIDTH));
-    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER |=  (1 << (14 * MODER_WIDTH));
-
-    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER &= ~(3 << (15 * MODER_WIDTH));
-    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
-    GPIOD->MODER |=  (1 << (15 * MODER_WIDTH));
+    for (uint32_t pin = 12; pin <= 15; pin++) {
+        GPIOD->MODER &= ~(3 << (pin * MODER_WIDTH)); // reset mode
+        GPIOD->MODER |=  (1 << (pin * MODER_WIDTH)); // set as output
+    }
 }
 
 /**
- *@brief Main entry point for blinking project using FreeRTOS.
- *
- *GPIOA Peripherals are configured to OUTPUT, with LED connected to PD12 being toggled every 100ms
+ *@brief Main entry point
  **/
-int main(void){
+int main(void) {
 
     prvSetupHardware();
 
-    // Create a blinking task, 100ms period via vTaskDelay.
-    xTaskCreate(BlinkTask_100ms, "Blink_100ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-
-    // Create a blinking task, 500ms period via vTaskDelay.
-    xTaskCreate(BlinkTask_500ms, "Blink_500ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-
-    // Create a blinking task, 1000ms period via vTaskDelay.
+    // Create separate blink tasks
+    xTaskCreate(BlinkTask_100ms,  "Blink_100ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(BlinkTask_500ms,  "Blink_500ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     xTaskCreate(BlinkTask_1000ms, "Blink_1000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-
-    // Create a blinking task, 2000ms period via vTaskDelay.
     xTaskCreate(BlinkTask_2000ms, "Blink_2000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
-    // Start the FreeRTOS scheduler.
+    // Start scheduler
     vTaskStartScheduler();
 
-    // Should never reach here if scheduler starts.
-    for(;;) { }
+    for(;;) { } // should never reach here
 }
