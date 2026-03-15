@@ -21,10 +21,16 @@ void HardFault_handler      (void)__attribute__((weak, alias("Default_handler"))
 void MemManage_handler      (void)__attribute__((weak, alias("Default_handler")));
 void BusFault_handler       (void)__attribute__((weak, alias("Default_handler")));
 void UsuageFault_handler    (void)__attribute__((weak, alias("Default_handler")));
-void SVCall_handler         (void)__attribute__((weak, alias("Default_handler")));
-void DebugMonitor_handler   (void)__attribute__((weak, alias("Default_handler")));
-void PendSV_handler         (void)__attribute__((weak, alias("Default_handler")));
-void Systick_handler        (void)__attribute__((weak, alias("Default_handler")));
+
+/* Cortex-M interrupt names expected in FreeRTOS port because FreeRTOSConfig maps:
+ *   vPortSVCHandler -> SVC_Handler
+ *   xPortPendSVHandler -> PendSV_Handler
+ *   xPortSysTickHandler -> SysTick_Handler
+ */
+void SVC_Handler(void)   __attribute__((weak, alias("Default_handler")));
+void PendSV_Handler(void)__attribute__((weak, alias("Default_handler")));
+void SysTick_Handler(void)__attribute__((weak, alias("Default_handler")));
+void DebugMonitor_handler(void)__attribute__((weak, alias("Default_handler")));
 void WWDG_handler                 (void)__attribute__((weak, alias("Default_handler")));
 void EXITI16_PVD__handler         (void)__attribute__((weak, alias("Default_handler")));
 void EXITI21_TAMP_STAMP_handler   (void)__attribute__((weak, alias("Default_handler")));
@@ -96,11 +102,11 @@ void (* const fpn_vector[])(void) = {
     0,
     0,
     0,
-    SVCall_handler,
+    SVC_Handler,      /* FreeRTOS SVC handler alias */
     DebugMonitor_handler,
     0,
-    PendSV_handler,
-    Systick_handler,
+    PendSV_Handler,   /* FreeRTOS PendSV handler alias */
+    SysTick_Handler,  /* FreeRTOS SysTick handler alias */
     WWDG_handler,
     EXITI16_PVD__handler,
     EXITI21_TAMP_STAMP_handler,

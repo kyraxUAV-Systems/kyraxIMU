@@ -34,7 +34,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
 }
 
 /* libc helpers needed by FreeRTOS components (queue/stream buffer etc.).
-   Because this is bare-metal and -nostdlib is used, we provide minimal definitions. */
+   Because this is bare-metal and -nostdlib is used, we provide minimal definitions. */ 
 void *memcpy(void *dest, const void *src, size_t n) {
     unsigned char *d = dest;
     const unsigned char *s = src;
@@ -49,19 +49,47 @@ void *memset(void *s, int c, size_t n) {
 }
 
 
-void wait_ms(int time){
-    for(int i = 0; i < time; i++){
-        for(int j = 0; j < 1600; j++);
+/* Blink task toggles PD12 every 100 ms using FreeRTOS delay. */
+static void BlinkTask_100ms(void *pvParameters) {
+    (void)pvParameters;
+    for(;;) {
+        GPIOD->ODR ^= (1 << 12); // toggle LED on PD12
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
-/**
- *@brief Main entry point for blinking project.
- *
- *GPIOA Peripherals are configured to OUTPUT, with LED connected to PA5 being toggled every 100ms
- **/
-int main(void){
 
+/* Blink task toggles PD13 every 500 ms using FreeRTOS delay. */
+static void BlinkTask_500ms(void *pvParameters) {
+    (void)pvParameters;
+    for(;;) {
+        GPIOD->ODR ^= (1 << 13); // toggle LED on PD13
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+/* Blink task toggles PD14 every 1000 ms using FreeRTOS delay. */
+static void BlinkTask_1000ms(void *pvParameters) {
+    (void)pvParameters;
+    for(;;) {
+        GPIOD->ODR ^= (1 << 14); // toggle LED on PD14
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+/* Blink task toggles PD15 every 2000 ms using FreeRTOS delay. */
+static void BlinkTask_2000ms(void *pvParameters) {
+    (void)pvParameters;
+    for(;;) {
+        GPIOD->ODR ^= (1 << 15); // toggle LED on PD15
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+}
+
+
+
+static void prvSetupHardware(void)
+{
     //Enable Clock to GPIOD Peripheral by writing 1 to AHB1ENR Bitfield of RCC
     RCC->AHB1ENR |= (1 << 3);
     
@@ -69,11 +97,47 @@ int main(void){
     GPIOD->MODER &= ~(3 << (12 * MODER_WIDTH));
     // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
     GPIOD->MODER |=  (1 << (12 * MODER_WIDTH));
-    
-    for(;;){
-        // Toggle PA5
-        GPIOD->ODR ^= (1 << 12);
-        // Wait for 100ms
-        wait_ms(100);
-    }
+
+    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
+    GPIOD->MODER &= ~(3 << (13 * MODER_WIDTH));
+    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
+    GPIOD->MODER |=  (1 << (13 * MODER_WIDTH));
+
+    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
+    GPIOD->MODER &= ~(3 << (14 * MODER_WIDTH));
+    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
+    GPIOD->MODER |=  (1 << (14 * MODER_WIDTH));
+
+    // Reset MODER Bitfield of PD12 to configure PD12 as OUTPUT
+    GPIOD->MODER &= ~(3 << (15 * MODER_WIDTH));
+    // Write Value 1 to MODER Bitfield PD12 to configure PD12 as OUTPUT
+    GPIOD->MODER |=  (1 << (15 * MODER_WIDTH));
+}
+
+/**
+ *@brief Main entry point for blinking project using FreeRTOS.
+ *
+ *GPIOA Peripherals are configured to OUTPUT, with LED connected to PD12 being toggled every 100ms
+ **/
+int main(void){
+
+    prvSetupHardware();
+
+    // Create a blinking task, 100ms period via vTaskDelay.
+    xTaskCreate(BlinkTask_100ms, "Blink_100ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Create a blinking task, 500ms period via vTaskDelay.
+    xTaskCreate(BlinkTask_500ms, "Blink_500ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Create a blinking task, 1000ms period via vTaskDelay.
+    xTaskCreate(BlinkTask_1000ms, "Blink_1000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Create a blinking task, 2000ms period via vTaskDelay.
+    xTaskCreate(BlinkTask_2000ms, "Blink_2000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    // Start the FreeRTOS scheduler.
+    vTaskStartScheduler();
+
+    // Should never reach here if scheduler starts.
+    for(;;) { }
 }
