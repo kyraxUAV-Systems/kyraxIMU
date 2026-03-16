@@ -45,8 +45,7 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
-/* Blink task toggles PD12 every 100 ms using vTaskDelayUntil */
-static void BlinkTask_100ms(void *pvParameters) {
+static void TaskCluster_100ms(void *pvParameters) {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xPeriod = pdMS_TO_TICKS(100);
@@ -57,8 +56,7 @@ static void BlinkTask_100ms(void *pvParameters) {
     }
 }
 
-/* Blink task toggles PD13 every 500 ms using vTaskDelayUntil */
-static void BlinkTask_500ms(void *pvParameters) {
+static void TaskCluster_500ms(void *pvParameters) {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xPeriod = pdMS_TO_TICKS(500);
@@ -69,8 +67,7 @@ static void BlinkTask_500ms(void *pvParameters) {
     }
 }
 
-/* Blink task toggles PD14 every 1000 ms using vTaskDelayUntil */
-static void BlinkTask_1000ms(void *pvParameters) {
+static void TaskCluster_1000ms(void *pvParameters) {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xPeriod = pdMS_TO_TICKS(1000);
@@ -81,8 +78,7 @@ static void BlinkTask_1000ms(void *pvParameters) {
     }
 }
 
-/* Blink task toggles PD15 every 2000 ms using vTaskDelayUntil */
-static void BlinkTask_2000ms(void *pvParameters) {
+static void TaskCluster_2000ms(void *pvParameters) {
     (void)pvParameters;
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xPeriod = pdMS_TO_TICKS(2000);
@@ -111,10 +107,10 @@ int main(void) {
     prvSetupHardware();
 
     // Create separate blink tasks
-    xTaskCreate(BlinkTask_100ms,  "Blink_100ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    xTaskCreate(BlinkTask_500ms,  "Blink_500ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    xTaskCreate(BlinkTask_1000ms, "Blink_1000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    xTaskCreate(BlinkTask_2000ms, "Blink_2000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(TaskCluster_100ms,  "Blink_100ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(TaskCluster_500ms,  "Blink_500ms",  configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(TaskCluster_1000ms, "Blink_1000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(TaskCluster_2000ms, "Blink_2000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     // Start scheduler
     vTaskStartScheduler();

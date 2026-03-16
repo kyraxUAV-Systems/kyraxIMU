@@ -1,0 +1,485 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+SRAM             0x20000000         0x00020000         xrw
+FLASH            0x08000000         0x00100000         xr
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD /usr/lib/gcc/arm-none-eabi/13.2.1/../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a
+LOAD /usr/lib/gcc/arm-none-eabi/13.2.1/thumb/v7e-m+fp/hard/libgcc.a
+LOAD src/obj/main.o
+LOAD src/obj/startup_STM32F407VGT6.o
+LOAD /tmp/ccQWvts5.o
+LOAD /tmp/ccRczmPV.o
+LOAD /tmp/ccmE79c7.o
+LOAD /tmp/cclC2rlu.o
+LOAD /tmp/cclWe5oP.o
+LOAD /tmp/ccsqKr3b.o
+LOAD /tmp/ccv777Xi.o
+LOAD /tmp/ccYjqiQm.o
+LOAD /tmp/ccXwsYtE.o
+                0x20020000                        _estack = (ORIGIN (SRAM) + LENGTH (SRAM))
+
+.isr_vector     0x08000000      0x194
+                0x08000000                        . = ALIGN (0x4)
+ *(.isr_vector)
+ .isr_vector    0x08000000      0x194 src/obj/startup_STM32F407VGT6.o
+                0x08000000                fpn_vector
+                0x08000194                        . = ALIGN (0x4)
+
+.text           0x08000194     0x7948
+                0x08000194                        . = ALIGN (0x4)
+ *(.text)
+ .text          0x08000194      0x298 src/obj/main.o
+                0x08000194                vApplicationIdleHook
+                0x080001a2                vApplicationTickHook
+                0x080001b0                vApplicationMallocFailedHook
+                0x080001ce                vApplicationStackOverflowHook
+                0x080001f0                memcpy
+                0x0800022e                memset
+                0x080003a8                main
+ .text          0x0800042c       0x6c src/obj/startup_STM32F407VGT6.o
+                0x0800042c                Reset_handler
+                0x08000490                UART2_handler
+                0x08000490                EXTI15_10_handler
+                0x08000490                DMA1_Stream7_handler
+                0x08000490                UART1_handler
+                0x08000490                TIM1_UP_TIM10_handler
+                0x08000490                EXTI0_handler
+                0x08000490                DMA1_Stream1_handler
+                0x08000490                SDIO_handler
+                0x08000490                NMI_handler
+                0x08000490                DMA2_Stream3_handler
+                0x08000490                TIM2_handler
+                0x08000490                SPI3_handler
+                0x08000490                TIM3_handler
+                0x08000490                WWDG_handler
+                0x08000490                UART6_handler
+                0x08000490                SPI2_handler
+                0x08000490                UsuageFault_handler
+                0x08000490                DMA2_Stream6_handler
+                0x08000490                DebugMonitor_handler
+                0x08000490                I2C3_ER_handler
+                0x08000490                DMA1_Stream3_handler
+                0x08000490                MemManage_handler
+                0x08000490                SPI4_handler
+                0x08000490                HardFault_handler
+                0x08000490                DMA1_Stream5_handler
+                0x08000490                FPU_handler
+                0x08000490                DMA2_Stream5_handler
+                0x08000490                EXITI21_TAMP_STAMP_handler
+                0x08000490                EXTI18_OTG_FS_WKUP_handler
+                0x08000490                RCC_handler
+                0x08000490                EXTI2_handler
+                0x08000490                DMA2_Stream1_handler
+                0x08000490                I2C1_ER_handler
+                0x08000490                EXTI9_5__handler
+                0x08000490                EXTI17_RTC_Alarm_handler
+                0x08000490                I2C2_EV_handler
+                0x08000490                EXITI22_RTC_WKUP_handler
+                0x08000490                EXTI3_handler
+                0x08000490                DMA2_Stream0_handler
+                0x08000490                FLASH_handler
+                0x08000490                OTG_FS_handler
+                0x08000490                DMA1_Stream4_handler
+                0x08000490                I2C2_ER_handler
+                0x08000490                TIM1_BRK_TIM9_handler
+                0x08000490                TIM4_handler
+                0x08000490                DMA1_Stream2_handler
+                0x08000490                EXTI4_handler
+                0x08000490                DMA1_Stream6_handler
+                0x08000490                ADC_handler
+                0x08000490                I2C1_EV_handler
+                0x08000490                SPI1_handler
+                0x08000490                DMA2_Stream4_handler
+                0x08000490                DMA2_Stream7_handler
+                0x08000490                DMA1_Stream0_handler
+                0x08000490                DMA2_Stream2_handler
+                0x08000490                EXTI1_handler
+                0x08000490                TIM1_TRG_COM_TIM11_handler
+                0x08000490                TIM5_handler
+                0x08000490                EXITI16_PVD__handler
+                0x08000490                I2C3_EV_handler
+                0x08000490                BusFault_handler
+                0x08000490                TIM1_CC_handler
+                0x08000490                Default_handler
+ .text          0x08000498        0x0 /tmp/ccQWvts5.o
+ .text          0x08000498      0x64c /tmp/ccRczmPV.o
+                0x08000498                xEventGroupCreate
+                0x080004c6                xEventGroupSync
+                0x08000628                xEventGroupWaitBits
+                0x080007cc                xEventGroupClearBits
+                0x0800083e                xEventGroupGetBitsFromISR
+                0x08000886                xEventGroupSetBits
+                0x080009a2                vEventGroupDelete
+                0x08000a24                vEventGroupSetBitsCallback
+                0x08000a3e                vEventGroupClearBitsCallback
+                0x08000a9c                uxEventGroupGetNumber
+                0x08000ac8                vEventGroupSetNumber
+ .text          0x08000ae4      0x168 /tmp/ccmE79c7.o
+                0x08000ae4                vListInitialise
+                0x08000b24                vListInitialiseItem
+                0x08000b3e                vListInsertEnd
+                0x08000b86                vListInsert
+                0x08000bf8                uxListRemove
+ .text          0x08000c4c     0x1654 /tmp/cclC2rlu.o
+                0x08000c4c                xQueueGenericReset
+                0x08000d70                xQueueGenericCreate
+                0x08000e88                xQueueCreateMutex
+                0x08000eb8                xQueueGiveMutexRecursive
+                0x08000f22                xQueueTakeMutexRecursive
+                0x08000fd0                xQueueCreateCountingSemaphore
+                0x0800102e                xQueueGenericSend
+                0x08001234                xQueueGenericSendFromISR
+                0x0800138e                xQueueGiveFromISR
+                0x080014d6                xQueueReceive
+                0x0800169c                xQueueSemaphoreTake
+                0x0800189c                xQueuePeek
+                0x08001a4c                xQueueReceiveFromISR
+                0x08001b80                xQueuePeekFromISR
+                0x08001c50                uxQueueMessagesWaiting
+                0x08001c8e                uxQueueSpacesAvailable
+                0x08001cd6                uxQueueMessagesWaitingFromISR
+                0x08001d14                vQueueDelete
+                0x08001d52                uxQueueGetQueueNumber
+                0x08001d6a                vQueueSetQueueNumber
+                0x08001d86                ucQueueGetQueueType
+                0x08001da0                uxQueueGetQueueItemSize
+                0x08001db8                uxQueueGetQueueLength
+                0x08001ff0                xQueueIsQueueEmptyFromISR
+                0x0800206a                xQueueIsQueueFullFromISR
+                0x080020b8                vQueueAddToRegistry
+                0x08002158                pcQueueGetName
+                0x080021c4                vQueueUnregisterQueue
+                0x08002238                vQueueWaitForMessageRestricted
+ .text          0x080022a0      0xf7a /tmp/cclWe5oP.o
+                0x080022a0                xStreamBufferGenericCreate
+                0x0800239e                vStreamBufferDelete
+                0x080023ee                xStreamBufferReset
+                0x0800247a                xStreamBufferResetFromISR
+                0x08002526                xStreamBufferSetTriggerLevel
+                0x08002584                xStreamBufferSpacesAvailable
+                0x080025fc                xStreamBufferBytesAvailable
+                0x08002638                xStreamBufferSend
+                0x080027e2                xStreamBufferSendFromISR
+                0x08002980                xStreamBufferReceive
+                0x08002ad2                xStreamBufferNextMessageLengthBytes
+                0x08002b5e                xStreamBufferReceiveFromISR
+                0x08002cbc                xStreamBufferIsEmpty
+                0x08002d0e                xStreamBufferIsFull
+                0x08002d70                xStreamBufferSendCompletedFromISR
+                0x08002dfe                xStreamBufferReceiveCompletedFromISR
+                0x080030f0                uxStreamBufferGetStreamBufferNotificationIndex
+                0x0800312a                vStreamBufferSetStreamBufferNotificationIndex
+                0x080031c8                uxStreamBufferGetStreamBufferNumber
+                0x080031e0                vStreamBufferSetStreamBufferNumber
+                0x080031fc                ucStreamBufferGetStreamBufferType
+ *fill*         0x0800321a        0x2 
+ .text          0x0800321c     0x3270 /tmp/ccsqKr3b.o
+                0x08003294                xTaskCreate
+                0x08003554                vTaskDelete
+                0x080036b8                xTaskDelayUntil
+                0x080037bc                vTaskDelay
+                0x08003828                eTaskGetState
+                0x08003938                uxTaskPriorityGet
+                0x0800398c                uxTaskPriorityGetFromISR
+                0x08003a04                uxTaskBasePriorityGet
+                0x08003a58                uxTaskBasePriorityGetFromISR
+                0x08003ad0                vTaskPrioritySet
+                0x08003ca4                vTaskSuspend
+                0x08003e94                vTaskResume
+                0x08003fa4                xTaskResumeFromISR
+                0x08004190                vTaskStartScheduler
+                0x08004218                vTaskEndScheduler
+                0x0800427c                vTaskSuspendAll
+                0x08004298                xTaskResumeAll
+                0x080044a8                xTaskGetTickCount
+                0x080044c8                xTaskGetTickCountFromISR
+                0x080044ec                uxTaskGetNumberOfTasks
+                0x08004504                pcTaskGetName
+                0x08004550                uxTaskGetSystemState
+                0x0800466c                xTaskCatchUpTicks
+                0x080046c4                xTaskIncrementTick
+                0x080048f8                vTaskSwitchContext
+                0x080049b4                vTaskPlaceOnEventList
+                0x08004a00                vTaskPlaceOnUnorderedEventList
+                0x08004ab0                vTaskPlaceOnEventListRestricted
+                0x08004b3c                xTaskRemoveFromEventList
+                0x08004cf0                vTaskRemoveFromUnorderedEventList
+                0x08004e78                vTaskSetTimeOutState
+                0x08004ec8                vTaskInternalSetTimeOutState
+                0x08004ef4                xTaskCheckForTimeOut
+                0x08004fc4                vTaskMissedYield
+                0x08004fdc                uxTaskGetTaskNumber
+                0x08005008                vTaskSetTaskNumber
+                0x0800513c                vTaskGetInfo
+                0x08005364                xTaskGetCurrentTaskHandle
+                0x08005384                xTaskGetCurrentTaskHandleForCore
+                0x080053b4                xTaskGetSchedulerState
+                0x080053f0                xTaskPriorityInherit
+                0x08005530                xTaskPriorityDisinherit
+                0x08005680                vTaskPriorityDisinheritAfterTimeout
+                0x080057f8                uxTaskResetEventItemValue
+                0x08005828                pvTaskIncrementMutexHeldCount
+                0x08005858                ulTaskGenericNotifyTake
+                0x0800595c                xTaskGenericNotifyWait
+                0x08005a94                xTaskGenericNotify
+                0x08005ce4                xTaskGenericNotifyFromISR
+                0x08005fa8                vTaskGenericNotifyGiveFromISR
+                0x080061bc                xTaskGenericNotifyStateClear
+                0x08006250                ulTaskGenericNotifyValueClear
+                0x080063ec                vTaskResetState
+ .text          0x0800648c      0x9d0 /tmp/ccv777Xi.o
+                0x0800648c                xTimerCreateTimerTask
+                0x080064f4                xTimerCreate
+                0x080065a8                xTimerGenericCommandFromTask
+                0x08006638                xTimerGenericCommandFromISR
+                0x080066a8                xTimerGetTimerDaemonTaskHandle
+                0x080066e4                xTimerGetPeriod
+                0x0800671e                vTimerSetReloadMode
+                0x08006786                xTimerGetReloadMode
+                0x080067da                uxTimerGetReloadMode
+                0x080067f6                xTimerGetExpiryTime
+                0x08006834                pcTimerGetName
+                0x08006d2c                xTimerIsTimerActive
+                0x08006d80                pvTimerGetTimerID
+                0x08006dc2                vTimerSetTimerID
+                0x08006e04                uxTimerGetTimerNumber
+                0x08006e1c                vTimerSetTimerNumber
+                0x08006e38                vTimerResetState
+ .text          0x08006e5c      0x564 /tmp/ccYjqiQm.o
+                0x08006e5c                pxPortInitialiseStack
+                0x08006f20                SVC_Handler
+                0x08006f6a                xPortStartScheduler
+                0x08007148                vPortEndScheduler
+                0x08007180                vPortEnterCritical
+                0x080071e4                vPortExitCritical
+                0x08007238                PendSV_Handler
+                0x0800729a                SysTick_Handler
+                0x080072e0                vPortSetupTimerInterrupt
+                0x0800733e                vPortValidateInterruptPriority
+ .text          0x080073c0      0x6c0 /tmp/ccXwsYtE.o
+                0x080073c0                pvPortMalloc
+                0x08007630                vPortFree
+                0x0800771c                xPortGetFreeHeapSize
+                0x08007734                xPortGetMinimumEverFreeHeapSize
+                0x0800774c                xPortResetHeapMinimumEverFreeHeapSize
+                0x0800776c                vPortInitialiseBlocks
+                0x0800777a                pvPortCalloc
+                0x08007984                vPortGetHeapStats
+                0x08007a40                vPortHeapResetState
+ *(.text.*)
+ *(.rodata)
+ .rodata        0x08007a80       0x35 src/obj/main.o
+ *fill*         0x08007ab5        0x3 
+ .rodata        0x08007ab8        0x9 /tmp/ccsqKr3b.o
+ *fill*         0x08007ac1        0x3 
+ .rodata        0x08007ac4        0xd /tmp/ccv777Xi.o
+ *fill*         0x08007ad1        0x3 
+ .rodata        0x08007ad4        0x4 /tmp/ccYjqiQm.o
+ .rodata        0x08007ad8        0x4 /tmp/ccXwsYtE.o
+ *(.rodata.*)
+                0x08007adc                        . = ALIGN (0x4)
+                0x08007adc                        _sidata = LOADADDR (.data)
+
+.glue_7         0x08007adc        0x0
+ .glue_7        0x08007adc        0x0 linker stubs
+
+.glue_7t        0x08007adc        0x0
+ .glue_7t       0x08007adc        0x0 linker stubs
+
+.vfp11_veneer   0x08007adc        0x0
+ .vfp11_veneer  0x08007adc        0x0 linker stubs
+
+.v4_bx          0x08007adc        0x0
+ .v4_bx         0x08007adc        0x0 linker stubs
+
+.iplt           0x08007adc        0x0
+ .iplt          0x08007adc        0x0 src/obj/main.o
+
+.rel.dyn        0x08007adc        0x0
+ .rel.iplt      0x08007adc        0x0 src/obj/main.o
+
+.data           0x20000000        0x8 load address 0x08007adc
+                0x20000000                        . = ALIGN (0x4)
+                0x20000000                        _sdata = .
+ *(.data)
+ .data          0x20000000        0x4 src/obj/main.o
+                0x20000000                SystemCoreClock
+ .data          0x20000004        0x0 src/obj/startup_STM32F407VGT6.o
+ .data          0x20000004        0x0 /tmp/ccQWvts5.o
+ .data          0x20000004        0x0 /tmp/ccRczmPV.o
+ .data          0x20000004        0x0 /tmp/ccmE79c7.o
+ .data          0x20000004        0x0 /tmp/cclC2rlu.o
+ .data          0x20000004        0x0 /tmp/cclWe5oP.o
+ .data          0x20000004        0x0 /tmp/ccsqKr3b.o
+ .data          0x20000004        0x0 /tmp/ccv777Xi.o
+ .data          0x20000004        0x4 /tmp/ccYjqiQm.o
+ .data          0x20000008        0x0 /tmp/ccXwsYtE.o
+ *(.data.*)
+                0x20000008                        . = ALIGN (0x4)
+                0x20000008                        _edata = .
+
+.igot.plt       0x20000008        0x0 load address 0x08007ae4
+ .igot.plt      0x20000008        0x0 src/obj/main.o
+
+.bss            0x20000008    0x12da4 load address 0x08007ae4
+                0x20000008                        . = ALIGN (0x4)
+                0x20000008                        _sbss = .
+ *(.bss)
+ .bss           0x20000008        0x0 src/obj/main.o
+ .bss           0x20000008        0x0 src/obj/startup_STM32F407VGT6.o
+ .bss           0x20000008        0x0 /tmp/ccQWvts5.o
+ .bss           0x20000008        0x0 /tmp/ccRczmPV.o
+ .bss           0x20000008        0x0 /tmp/ccmE79c7.o
+ .bss           0x20000008       0x40 /tmp/cclC2rlu.o
+                0x20000008                xQueueRegistry
+ .bss           0x20000048        0x0 /tmp/cclWe5oP.o
+ .bss           0x20000048      0x104 /tmp/ccsqKr3b.o
+                0x20000048                pxCurrentTCB
+ .bss           0x2000014c       0x3c /tmp/ccv777Xi.o
+ .bss           0x20000188        0x8 /tmp/ccYjqiQm.o
+ .bss           0x20000190    0x12c1c /tmp/ccXwsYtE.o
+ *(.bss.*)
+                0x20012dac                        . = ALIGN (0x4)
+                0x20012dac                        _ebss = .
+OUTPUT(debug/main.elf elf32-littlearm)
+LOAD linker stubs
+
+.debug_info     0x00000000     0x8380
+ .debug_info    0x00000000      0x67d src/obj/main.o
+ .debug_info    0x0000067d      0x171 src/obj/startup_STM32F407VGT6.o
+ .debug_info    0x000007ee       0x73 /tmp/ccQWvts5.o
+ .debug_info    0x00000861      0x978 /tmp/ccRczmPV.o
+ .debug_info    0x000011d9      0x29f /tmp/ccmE79c7.o
+ .debug_info    0x00001478     0x1845 /tmp/cclC2rlu.o
+ .debug_info    0x00002cbd     0x1479 /tmp/cclWe5oP.o
+ .debug_info    0x00004136     0x2870 /tmp/ccsqKr3b.o
+ .debug_info    0x000069a6      0xeb2 /tmp/ccv777Xi.o
+ .debug_info    0x00007858      0x564 /tmp/ccYjqiQm.o
+ .debug_info    0x00007dbc      0x5c4 /tmp/ccXwsYtE.o
+
+.debug_abbrev   0x00000000     0x183e
+ .debug_abbrev  0x00000000      0x27b src/obj/main.o
+ .debug_abbrev  0x0000027b       0xfa src/obj/startup_STM32F407VGT6.o
+ .debug_abbrev  0x00000375       0x26 /tmp/ccQWvts5.o
+ .debug_abbrev  0x0000039b      0x2b1 /tmp/ccRczmPV.o
+ .debug_abbrev  0x0000064c       0xec /tmp/ccmE79c7.o
+ .debug_abbrev  0x00000738      0x329 /tmp/cclC2rlu.o
+ .debug_abbrev  0x00000a61      0x2d7 /tmp/cclWe5oP.o
+ .debug_abbrev  0x00000d38      0x3a9 /tmp/ccsqKr3b.o
+ .debug_abbrev  0x000010e1      0x2db /tmp/ccv777Xi.o
+ .debug_abbrev  0x000013bc      0x245 /tmp/ccYjqiQm.o
+ .debug_abbrev  0x00001601      0x23d /tmp/ccXwsYtE.o
+
+.debug_aranges  0x00000000      0x158
+ .debug_aranges
+                0x00000000       0x20 src/obj/main.o
+ .debug_aranges
+                0x00000020       0x20 src/obj/startup_STM32F407VGT6.o
+ .debug_aranges
+                0x00000040       0x18 /tmp/ccQWvts5.o
+ .debug_aranges
+                0x00000058       0x20 /tmp/ccRczmPV.o
+ .debug_aranges
+                0x00000078       0x20 /tmp/ccmE79c7.o
+ .debug_aranges
+                0x00000098       0x20 /tmp/cclC2rlu.o
+ .debug_aranges
+                0x000000b8       0x20 /tmp/cclWe5oP.o
+ .debug_aranges
+                0x000000d8       0x20 /tmp/ccsqKr3b.o
+ .debug_aranges
+                0x000000f8       0x20 /tmp/ccv777Xi.o
+ .debug_aranges
+                0x00000118       0x20 /tmp/ccYjqiQm.o
+ .debug_aranges
+                0x00000138       0x20 /tmp/ccXwsYtE.o
+
+.debug_line     0x00000000     0x4908
+ .debug_line    0x00000000      0x2bc src/obj/main.o
+ .debug_line    0x000002bc       0xc4 src/obj/startup_STM32F407VGT6.o
+ .debug_line    0x00000380       0x46 /tmp/ccQWvts5.o
+ .debug_line    0x000003c6      0x4d0 /tmp/ccRczmPV.o
+ .debug_line    0x00000896      0x1c9 /tmp/ccmE79c7.o
+ .debug_line    0x00000a5f      0xef1 /tmp/cclC2rlu.o
+ .debug_line    0x00001950      0x9d5 /tmp/cclWe5oP.o
+ .debug_line    0x00002325     0x1717 /tmp/ccsqKr3b.o
+ .debug_line    0x00003a3c      0x629 /tmp/ccv777Xi.o
+ .debug_line    0x00004065      0x39d /tmp/ccYjqiQm.o
+ .debug_line    0x00004402      0x506 /tmp/ccXwsYtE.o
+
+.debug_str      0x00000000     0x2d0d
+ .debug_str     0x00000000     0x2d0d src/obj/main.o
+                                0x452 (size before relaxing)
+ .debug_str     0x00002d0d      0x1b7 src/obj/startup_STM32F407VGT6.o
+ .debug_str     0x00002d0d      0x153 /tmp/ccQWvts5.o
+ .debug_str     0x00002d0d      0x64c /tmp/ccRczmPV.o
+ .debug_str     0x00002d0d      0x297 /tmp/ccmE79c7.o
+ .debug_str     0x00002d0d      0xb60 /tmp/cclC2rlu.o
+ .debug_str     0x00002d0d      0x9a7 /tmp/cclWe5oP.o
+ .debug_str     0x00002d0d     0x12b7 /tmp/ccsqKr3b.o
+ .debug_str     0x00002d0d      0x90d /tmp/ccv777Xi.o
+ .debug_str     0x00002d0d      0x437 /tmp/ccYjqiQm.o
+ .debug_str     0x00002d0d      0x510 /tmp/ccXwsYtE.o
+
+.comment        0x00000000       0x26
+ .comment       0x00000000       0x26 src/obj/main.o
+                                 0x27 (size before relaxing)
+ .comment       0x00000026       0x27 src/obj/startup_STM32F407VGT6.o
+ .comment       0x00000026       0x27 /tmp/ccQWvts5.o
+ .comment       0x00000026       0x27 /tmp/ccRczmPV.o
+ .comment       0x00000026       0x27 /tmp/ccmE79c7.o
+ .comment       0x00000026       0x27 /tmp/cclC2rlu.o
+ .comment       0x00000026       0x27 /tmp/cclWe5oP.o
+ .comment       0x00000026       0x27 /tmp/ccsqKr3b.o
+ .comment       0x00000026       0x27 /tmp/ccv777Xi.o
+ .comment       0x00000026       0x27 /tmp/ccYjqiQm.o
+ .comment       0x00000026       0x27 /tmp/ccXwsYtE.o
+
+.ARM.attributes
+                0x00000000       0x34
+ .ARM.attributes
+                0x00000000       0x34 src/obj/main.o
+ .ARM.attributes
+                0x00000034       0x34 src/obj/startup_STM32F407VGT6.o
+ .ARM.attributes
+                0x00000068       0x34 /tmp/ccQWvts5.o
+ .ARM.attributes
+                0x0000009c       0x34 /tmp/ccRczmPV.o
+ .ARM.attributes
+                0x000000d0       0x34 /tmp/ccmE79c7.o
+ .ARM.attributes
+                0x00000104       0x34 /tmp/cclC2rlu.o
+ .ARM.attributes
+                0x00000138       0x34 /tmp/cclWe5oP.o
+ .ARM.attributes
+                0x0000016c       0x34 /tmp/ccsqKr3b.o
+ .ARM.attributes
+                0x000001a0       0x34 /tmp/ccv777Xi.o
+ .ARM.attributes
+                0x000001d4       0x34 /tmp/ccYjqiQm.o
+ .ARM.attributes
+                0x00000208       0x34 /tmp/ccXwsYtE.o
+
+.debug_frame    0x00000000     0x1f10
+ .debug_frame   0x00000000      0x1a0 src/obj/main.o
+ .debug_frame   0x000001a0       0x4c src/obj/startup_STM32F407VGT6.o
+ .debug_frame   0x000001ec      0x1d0 /tmp/ccRczmPV.o
+ .debug_frame   0x000003bc       0xd8 /tmp/ccmE79c7.o
+ .debug_frame   0x00000494      0x580 /tmp/cclC2rlu.o
+ .debug_frame   0x00000a14      0x424 /tmp/cclWe5oP.o
+ .debug_frame   0x00000e38      0x990 /tmp/ccsqKr3b.o
+ .debug_frame   0x000017c8      0x40c /tmp/ccv777Xi.o
+ .debug_frame   0x00001bd4      0x1a8 /tmp/ccYjqiQm.o
+ .debug_frame   0x00001d7c      0x194 /tmp/ccXwsYtE.o
+
+.debug_rnglists
+                0x00000000       0x1c
+ .debug_rnglists
+                0x00000000       0x1c /tmp/ccsqKr3b.o
