@@ -51,3 +51,12 @@ void spi_init(void) {
     //5. ENABLE SPI
     SPI1->CR1 |= (1U << 6U);
 }
+
+void spi_write(uint16_t data){
+    // Assert Busy Flag
+    while(SPI1->SR & (0x80)){}
+    // Set SS Pin
+    GPIOA->ODR |= (1U << 4U);
+
+    SPI1->DR = data;
+}
