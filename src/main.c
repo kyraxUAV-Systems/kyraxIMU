@@ -10,6 +10,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "spi_driver.h"
+
 #define MODER_WIDTH 2
 
 /* FreeRTOS runtime / linker symbols */
@@ -51,6 +53,7 @@ static void TaskCluster_100ms(void *pvParameters) {
     const TickType_t xPeriod = pdMS_TO_TICKS(100);
 
     for(;;) {
+        spi_write(0xAAAA);
         GPIOD->ODR ^= (1 << 12);
         vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
@@ -74,6 +77,7 @@ static void TaskCluster_1000ms(void *pvParameters) {
 
     for(;;) {
         GPIOD->ODR ^= (1 << 14);
+        spi_write(0x1010);
         vTaskDelayUntil(&xLastWakeTime, xPeriod);
     }
 }
@@ -91,12 +95,16 @@ static void TaskCluster_2000ms(void *pvParameters) {
 
 /* Hardware setup for GPIOD pins PD12..PD15 */
 static void prvSetupHardware(void) {
+
     RCC->AHB1ENR |= (1 << 3); // enable GPIOD clock
 
     for (uint32_t pin = 12; pin <= 15; pin++) {
         GPIOD->MODER &= ~(3 << (pin * MODER_WIDTH)); // reset mode
         GPIOD->MODER |=  (1 << (pin * MODER_WIDTH)); // set as output
     }
+
+    spi_init();
+
 }
 
 /**

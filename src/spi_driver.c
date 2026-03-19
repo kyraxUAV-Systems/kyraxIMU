@@ -5,45 +5,46 @@
 #define SPIx_CLK_EN_BIT 12U
 #define AF_MODE 2U
 
+// For now void parameter
 void spi_init(void) {
     //0. Enable Clock to SPI APBx
-    RCC->APB2ENR |= (1 << SPIx_CLK_EN_BIT);
+    RCC->APB2ENR |= (1U << SPIx_CLK_EN_BIT);
 
     //1. Enable Clock to GPIOA
-    RCC->AHB1ENR |= (1 << 0);
+    RCC->AHB1ENR |= 1;
 
     //2. Set GPIOA to AF5
     //3. Set AF for GPIOA - AF5
     // PA4 - SPI1_NSS
     GPIOA->MODER &= ~(3U << (4U * 2U));
     GPIOA->MODER |=  (1U << (4U * 2U)); //1U or AF_MODE?
-    GPIOA->AFRL  &= ~(15U << (4U * 2U));
-    GPIOA->AFRL  |=  (5U << (4U * 2U));
+    //GPIOA->AFR[0]  &= ~(15U << (4U * 2U));
+    //GPIOA->AFR[0]  |=  (5U << (4U * 2U));
     // PA5 - SPI1_SCK
     GPIOA->MODER &= ~(3U << (5U * 2U));
     GPIOA->MODER |=  (AF_MODE << (5U * 2U));
-    GPIOA->AFRL  &= ~(15U << (5U * 2U));
-    GPIOA->AFRL  |=  (5U << (5U * 2U));
+    GPIOA->AFR[0]  &= ~(15U << (5U * 4U));
+    GPIOA->AFR[0]  |=  (5U << (5U * 4U));
     // PA6 - SPI1_MISO
-    GPIOA->MODER &= ~(3U << (6U * 2U));
-    GPIOA->MODER |=  (AF_MODE << (6U * 2U));
-    GPIOA->AFRL  &= ~(15U << (6U * 2U));
-    GPIOA->AFRL  |=  (5U << (6U * 2U));
+    //GPIOA->MODER &= ~(3U << (6U * 2U));
+    //GPIOA->MODER |=  (AF_MODE << (6U * 2U));
+    //GPIOA->AFR[0]  &= ~(15U << (6U * 4U));
+    //GPIOA->AFR[0]  |=  (5U << (6U * 4U));
     // PA7 - SPI1_MOSI
     GPIOA->MODER &= ~(3U << (7U * 2U));
     GPIOA->MODER |=  (AF_MODE << (7U * 2U));
-    GPIOA->AFRL  &= ~(15U << (7U * 2U));
-    GPIOA->AFRL  |=  (5U << (7U * 2U));
+    GPIOA->AFR[0]  &= ~(15U << (7U * 4U));
+    GPIOA->AFR[0]  |=  (5U << (7U * 4U));
 
-    //2. Configure SPI - Set Clock Polarity and Clock Phase
-    SPI1->CR1 &= ~(1U << 0U); //Positive CLK EDGE
-    SPI1->CR1 &= ~(1U << 1U); //IDLE when 0
-    //3. Configure SPI - Set Master / Slave
-    SPI1->CR1 |= (1U << 2U); //Set to master
-    //4. Configure SPI - Setting Bit Rate
-    SPI1->CR1 &= ~(3U << 3U) //Baudrate of 8MHz
-    //5. Configure SPI - Data Frame Format to 16 for IMU
-    SPI1->CR1 |= (1U << 11U);
+    SPI1->CR1 = 0;
+
+    SPI1->CR1 |= (1 << 2);   // Master
+    SPI1->CR1 |= (3 << 3);   // Baudrate
+    SPI1->CR1 |= (1 << 9);   // SSM
+    SPI1->CR1 |= (1 << 8);   // SSI
+    SPI1->CR1 |= (1 << 11);  // 16-bit
+
+    SPI1->CR1 |= (1 << 6);   // Enable SPI
 
     //6. Configure SPI - CR2 Default
     SPI1->CR2 = 0U;
@@ -54,9 +55,13 @@ void spi_init(void) {
 
 void spi_write(uint16_t data){
     // Assert Busy Flag
-    while(SPI1->SR & (0x80)){}
+    while(!(SPI1->SR & (1U << 1U))){}
     // Set SS Pin
-    GPIOA->ODR |= (1U << 4U);
+    GPIOA->ODR &= ~(1U << 4U);
 
     SPI1->DR = data;
+
+    while(SPI1->SR & (1U << 7U)){}
+
+    GPIOA->ODR |= (1U << 4U);
 }
