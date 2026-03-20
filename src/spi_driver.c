@@ -13,11 +13,19 @@ void spi_init(void) {
     //1. Enable Clock to GPIOA
     RCC->AHB1ENR |= 1;
 
+    /*GPIOA Interrupt pins*/
+    //PA2
+    GPIOA->MODER &= ~(3U << (2U * 2U));
+    GPIOA->MODER |=  (1U << (2U * 2U));
+    //PA3
+    GPIOA->MODER &= ~(3U << (3U * 2U));
+    GPIOA->MODER |=  (1U << (3U * 2U));
+
     //2. Set GPIOA to AF5
     //3. Set AF for GPIOA - AF5
     // PA4 - SPI1_NSS
     GPIOA->MODER &= ~(3U << (4U * 2U));
-    GPIOA->MODER |=  (1U << (4U * 2U)); //1U or AF_MODE?
+    GPIOA->MODER |=  (1U << (4U * 2U));
     //GPIOA->AFR[0]  &= ~(15U << (4U * 2U));
     //GPIOA->AFR[0]  |=  (5U << (4U * 2U));
     // PA5 - SPI1_SCK
@@ -26,10 +34,10 @@ void spi_init(void) {
     GPIOA->AFR[0]  &= ~(15U << (5U * 4U));
     GPIOA->AFR[0]  |=  (5U << (5U * 4U));
     // PA6 - SPI1_MISO
-    //GPIOA->MODER &= ~(3U << (6U * 2U));
-    //GPIOA->MODER |=  (AF_MODE << (6U * 2U));
-    //GPIOA->AFR[0]  &= ~(15U << (6U * 4U));
-    //GPIOA->AFR[0]  |=  (5U << (6U * 4U));
+    GPIOA->MODER &= ~(3U << (6U * 2U));
+    GPIOA->MODER |=  (AF_MODE << (6U * 2U));
+    GPIOA->AFR[0]  &= ~(15U << (6U * 4U));
+    GPIOA->AFR[0]  |=  (5U << (6U * 4U));
     // PA7 - SPI1_MOSI
     GPIOA->MODER &= ~(3U << (7U * 2U));
     GPIOA->MODER |=  (AF_MODE << (7U * 2U));
@@ -38,11 +46,11 @@ void spi_init(void) {
 
     SPI1->CR1 = 0;
 
-    SPI1->CR1 |= (1 << 2);   // Master
-    SPI1->CR1 |= (3 << 3);   // Baudrate
-    SPI1->CR1 |= (1 << 9);   // SSM
-    SPI1->CR1 |= (1 << 8);   // SSI
-    SPI1->CR1 |= (1 << 11);  // 16-bit
+    SPI1->CR1 |= (1U << 2U);   // Master
+    SPI1->CR1 &=~(7U << 3U);   // Baudrate
+    SPI1->CR1 |= (1U << 9U);   // SSM
+    SPI1->CR1 |= (1U << 8U);   // SSI
+    SPI1->CR1 |= (1U << 11U);  // 16-bit
 
     SPI1->CR1 |= (1 << 6);   // Enable SPI
 
