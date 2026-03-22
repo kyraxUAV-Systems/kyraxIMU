@@ -73,3 +73,34 @@ void spi_write(uint16_t data){
 
     GPIOA->ODR |= (1U << 4U);
 }
+
+void spi_write_keep_CS_LOW(uint16_t data){
+    // Assert Busy Flag
+    while(!(SPI1->SR & (1U << 1U))){}
+    // Set SS Pin
+    GPIOA->ODR &= ~(1U << 4U);
+
+    SPI1->DR = data;
+
+    while(SPI1->SR & (1U << 7U)){}
+}
+
+uint16_t spi_transfer(uint16_t data){
+    // Assert Busy Flag (TXE = 1)
+    while(!(SPI1->SR & SPI_SR_TXE)) {}
+
+    // Pull CS low
+    GPIOA->ODR &= ~(1U << 4U);
+
+    // Send data
+    SPI1->DR = data;
+
+    // Wait until RXNE is set (data received)
+    while(!(SPI1->SR & SPI_SR_RXNE)) {}
+
+    // Read received data
+    uint16_t received = SPI1->DR;
+
+    // Keep CS LOW if desired, caller will release later
+    return received;
+}
