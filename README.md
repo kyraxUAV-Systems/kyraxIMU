@@ -1,6 +1,9 @@
 # kyraxIMU
 IMU Subsystem for UAV Architecture
 
+## FreeRTOS guide
+- See [docs/freertos-guide.md](docs/freertos-guide.md) for a practical walkthrough on creating tasks, scheduling them, using semaphores and mutexes, and coordinating task sequences.
+
 # IMU System Architecture Diagram Draft V0.2.0
 <img width="442" height="583" alt="IMU_Sys_Arch_Diagram" src="https://github.com/user-attachments/assets/8298c116-4560-4099-aeab-5383acf60552" />
 
