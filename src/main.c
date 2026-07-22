@@ -404,7 +404,7 @@ int main(void) {
     /* Create the periodic CAN transmit task that sends a sample frame every 250 ms. */
     xTaskCreate(CanTxTask_250ms, "CanTx_250ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     /* Create the periodic CAN receive task that polls FIFO0 and records incoming frames. */
-    xTaskCreate(CanRxTask_100ms, "CanRx_100ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+    //xTaskCreate(CanRxTask_100ms, "CanRx_100ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     /* Start scheduler */
     /* Start the FreeRTOS scheduler so the created tasks begin running. */

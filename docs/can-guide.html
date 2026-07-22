@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAN Zero-to-Hero Guide for STM32F407</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0f1b2d;
+      --panel-2: #14253d;
+      --text: #e8f1ff;
+      --muted: #8da0bf;
+      --accent: #5ee7ff;
+      --accent-2: #7c7cff;
+      --good: #46d39a;
+      --warn: #ffba5a;
+      --danger: #ff6b6b;
+      --border: #22334f;
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(94,231,255,0.12), transparent 32%),
+        linear-gradient(135deg, var(--bg), #050a12 75%);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 90px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(20,37,61,0.96), rgba(7,17,31,0.95));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      margin: 0 0 10px;
+      line-height: 1.15;
+    }
+
+    .hero p {
+      font-size: 1.03rem;
+      color: var(--muted);
+      max-width: 780px;
+      margin: 0;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pill {
+      background: rgba(94,231,255,0.12);
+      border: 1px solid rgba(94,231,255,0.25);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.93rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-bottom: 20px;
+    }
+
+    .card, .toc, .note, .code-block, .table-card {
+      background: rgba(15, 27, 45, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .card, .toc, .note, .table-card { padding: 22px 24px; }
+    .code-block { padding: 16px 18px; overflow-x: auto; }
+
+    .card h2, .toc h2, .note h2, .table-card h2 { margin-top: 0; font-size: 1.22rem; }
+
+    .muted { color: var(--muted); }
+    .accent { color: var(--accent); }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .danger { color: var(--danger); }
+
+    .toc ul { padding-left: 18px; }
+    .toc li { margin: 6px 0; }
+
+    .step {
+      border-left: 3px solid var(--accent);
+      padding-left: 14px;
+      margin: 12px 0 16px;
+    }
+
+    code, pre {
+      font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    pre {
+      margin: 0;
+      color: #dce8ff;
+      font-size: 0.95rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th { color: var(--accent); }
+
+    .hero-list { padding-left: 18px; }
+    .hero-list li { margin: 8px 0; }
+
+    .callout {
+      background: linear-gradient(90deg, rgba(94,231,255,0.12), rgba(124,124,255,0.16));
+      border: 1px solid rgba(94,231,255,0.24);
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin: 16px 0;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; }
+    @media (max-width: 900px) {
+      .grid, .two-col { grid-template-columns: 1fr; }
+    }
+
+    .section { margin-top: 24px; }
+    .section h2 { margin-bottom: 8px; }
+    .section p { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>CAN Zero-to-Hero Guide for STM32F407</h1>
+      <p>
+        This document is a complete, practical guide to Controller Area Network (CAN) from first principles to real-world STM32F407 usage. It covers the physical layer, protocol behavior, frame formats, timing, transceivers, troubleshooting, and how this repository’s FreeRTOS-based CAN implementation works.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Zero to Hero</span>
+        <span class="pill">STM32F407 + CAN1</span>
+        <span class="pill">FreeRTOS integration</span>
+        <span class="pill">Practical wiring and debugging</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="toc">
+        <h2>Table of contents</h2>
+        <ul>
+          <li><a href="#what-is-can">What CAN is and why it matters</a></li>
+          <li><a href="#how-can-works">How CAN works under the hood</a></li>
+          <li><a href="#frame-types">Frame types and structure</a></li>
+          <li><a href="#bus-physical-layer">Physical layer and transceivers</a></li>
+          <li><a href="#bit-timing">Bit timing and baud rates</a></li>
+          <li><a href="#stm32f407-setup">STM32F407 CAN setup</a></li>
+          <li><a href="#freertos-usage">Using CAN in FreeRTOS</a></li>
+          <li><a href="#troubleshooting">Troubleshooting and best practices</a></li>
+          <li><a href="#quick-reference">Quick reference</a></li>
+        </ul>
+      </section>
+      <section class="note">
+        <h2>Core idea in one sentence</h2>
+        <p>
+          CAN is a robust, message-based, multi-node serial bus designed for embedded systems where many devices must communicate reliably with low wiring cost and deterministic behavior.
+        </p>
+        <div class="callout">
+          <strong>Key strength:</strong> CAN uses arbitration on the bus so that multiple nodes can transmit without a central controller, and the winner of contention continues sending its message.
+        </div>
+      </section>
+    </div>
+
+    <section class="section" id="what-is-can">
+      <h2>1. What CAN is and why it matters</h2>
+      <p>
+        Controller Area Network, or CAN, is a communication standard created for automotive and industrial systems. Its design goals were simple but powerful: allow many controllers to exchange messages over a shared two-wire bus with high reliability, low overhead, and deterministic timing.
+      </p>
+      <p>
+        In a modern embedded project, CAN is useful whenever you have multiple microcontrollers, sensors, actuators, or boards that need to share data without using a huge number of dedicated wires. It is common in vehicles, robotics, industrial automation, motor controllers, battery management systems, and test equipment.
+      </p>
+      <div class="two-col">
+        <div class="card">
+          <h3>Why CAN is popular</h3>
+          <ul class="hero-list">
+            <li>Multi-node communication with just two wires</li>
+            <li>Built-in arbitration without a central bus master</li>
+            <li>Excellent reliability for noisy environments</li>
+            <li>Very low protocol overhead compared with higher-layer networking stacks</li>
+            <li>Widely supported by MCUs, toolchains, and hardware</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What makes it different from UART or SPI</h3>
+          <ul class="hero-list">
+            <li>UART is point-to-point and simple but not multi-node</li>
+            <li>SPI requires a dedicated chip select line per device</li>
+            <li>CAN allows many nodes to share the same bus naturally</li>
+            <li>CAN supports collision resolution at the bit level</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how-can-works">
+      <h2>2. How CAN works under the hood</h2>
+      <p>
+        CAN is message-oriented rather than byte-stream-oriented. Instead of sending a continuous stream of bytes like UART, each node transmits packets called frames. These frames contain identifiers, control bits, data, and error-checking information.
+      </p>
+      <div class="card">
+        <h3>The bus in practice</h3>
+        <p>
+          The bus is physically two wires: CANH and CANL. They carry differential signals. The receiver interprets the voltage difference between the wires rather than the absolute voltage on a single wire. That makes CAN resistant to noise and common-mode interference.
+        </p>
+        <div class="callout">
+          <strong>Important concept:</strong> CAN nodes do not transmit in a fixed time slot. They compete for the bus using arbitration. The node that wins continues transmitting its frame.
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Core protocol concepts</h3>
+        <ul class="hero-list">
+          <li><strong>Arbitration:</strong> resolves which node gets to send when multiple nodes start transmitting at once.</li>
+          <li><strong>ACK:</strong> confirms that at least one node received the frame correctly.</li>
+          <li><strong>CRC:</strong> detects bit errors in the transmitted frame.</li>
+          <li><strong>Error handling:</strong> nodes can signal errors and possibly enter bus-off state if repeated errors occur.</li>
+          <li><strong>Bit stuffing:</strong> inserted bits keep the stream from staying too long in one state, helping with clock recovery.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="frame-types">
+      <h2>3. Frame types and structure</h2>
+      <p>
+        The most important frame is the data frame. CAN also supports remote frames and error frames, though most practical applications use data frames.
+      </p>
+
+      <div class="card">
+        <h3>Standard data frame layout</h3>
+        <pre>SOF | Identifier | RTR | IDE | DLC | Data bytes | CRC | ACK | EOF | IFS</pre>
+        <p class="muted">
+          The exact field names vary slightly by implementation, but the overall idea is the same: an identifier, control bits, payload, integrity checks, and delimiters.
+        </p>
+      </div>
+
+      <div class="table-card" style="margin-top: 16px;">
+        <h3>Common frame fields</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>SOF</td><td>Start of frame bit</td></tr>
+            <tr><td>Identifier</td><td>Message ID used for arbitration and filtering</td></tr>
+            <tr><td>RTR</td><td>Remote transmission request bit</td></tr>
+            <tr><td>IDE</td><td>Identifier extension bit, marks standard vs extended format</td></tr>
+            <tr><td>DLC</td><td>Data length code, from 0 to 8 bytes</td></tr>
+            <tr><td>Data</td><td>The actual payload bytes</td></tr>
+            <tr><td>CRC</td><td>Cycle redundancy check for error detection</td></tr>
+            <tr><td>ACK</td><td>Receiver confirms valid reception</td></tr>
+            <tr><td>EOF</td><td>End-of-frame delimiter</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Standard vs extended frames</h3>
+        <ul class="hero-list">
+          <li><strong>Standard frame:</strong> 11-bit identifier</li>
+          <li><strong>Extended frame:</strong> 29-bit identifier</li>
+          <li>Extended frames are more flexible but slightly more overhead</li>
+          <li>Most beginner projects begin with standard frames</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="bus-physical-layer">
+      <h2>4. Physical layer and transceivers</h2>
+      <p>
+        The CAN controller inside the MCU is not the whole bus interface. The controller drives the bus through a transceiver. The transceiver converts the MCU’s logic-level signals into the differential CANH/CANL bus signaling required by the standard.
+      </p>
+      <div class="card">
+        <h3>Why the transceiver matters</h3>
+        <ul class="hero-list">
+          <li>It provides the correct differential voltage levels</li>
+          <li>It improves noise immunity</li>
+          <li>It ensures the bus is properly driven and received</li>
+          <li>It protects the MCU from bus transients</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Termination and topology</h3>
+        <p>
+          CAN is normally a single-ended differential bus with a termination resistor at each end of the physical bus. The standard value is usually 120 ohms across CANH/CANL at the two ends of the bus.
+        </p>
+        <div class="callout">
+          <strong>Rule of thumb:</strong> If you have a short bus with only two devices, ensure the transceiver side is correctly terminated and that the common ground reference is adequate.
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="bit-timing">
+      <h2>5. Bit timing and baud rates</h2>
+      <p>
+        CAN timing is more subtle than many beginner UART examples. Each bit is segmented into multiple time quanta. The controller uses propagation, phase, and synchronization segments to sample the bus reliably at the right moment.
+      </p>
+      <div class="card">
+        <h3>Key timing concepts</h3>
+        <ul class="hero-list">
+          <li><strong>BRP:</strong> baud rate prescaler</li>
+          <li><strong>TS1:</strong> time segment 1</li>
+          <li><strong>TS2:</strong> time segment 2</li>
+          <li><strong>SJW:</strong> resynchronization jump width</li>
+        </ul>
+      </div>
+      <div class="code-block" style="margin-top: 16px;">
+        <pre>CAN bit timing is derived from:
+- system clock
+- BRP
+- TS1
+- TS2
+- SJW
+
+Typical result: 500 kbps or 1 Mbps bus speeds</pre>
+      </div>
+      <p>
+        For a beginner setup, using a standard target such as 500 kbps is often easier than trying to optimize everything from scratch. If your clock is different from the expected value, the timing register values must be recalculated.
+      </p>
+    </section>
+
+    <section class="section" id="stm32f407-setup">
+      <h2>6. STM32F407 CAN setup</h2>
+      <p>
+        This repository’s firmware uses CAN1 on the STM32F407 with PB8 and PB9. Those pins are mapped to CAN1 RX and CAN1 TX respectively through the MCU’s alternate function system.
+      </p>
+      <div class="card">
+        <h3>Recommended pin mapping</h3>
+        <ul class="hero-list">
+          <li>PB8 → CAN1_RX</li>
+          <li>PB9 → CAN1_TX</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Hardware wiring example</h3>
+        <pre>STM32F407 PB8  -> transceiver RX pin
+STM32F407 PB9  -> transceiver TX pin
+Transceiver CANH -> CAN bus CANH
+Transceiver CANL -> CAN bus CANL
+Ground shared between MCU and transceiver</pre>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Register-level overview</h3>
+        <pre>1. Enable GPIOB and CAN1 clock
+2. Configure PB8/PB9 as alternate function
+3. Enter initialization mode
+4. Set bit timing
+5. Configure receive filter
+6. Leave initialization mode
+7. Enable transmission</pre>
+      </div>
+
+      <div class="code-block" style="margin-top: 16px;">
+        <pre>Example of the core idea in C:
+CAN1-&gt;MCR |= CAN_MCR_INRQ;   // enter initialization mode
+CAN1-&gt;BTR = ...;            // configure bit timing
+prvCanConfigureRxFilter();  // accept incoming frames
+CAN1-&gt;MCR &= ~CAN_MCR_INRQ;  // leave initialization mode</pre>
+      </div>
+    </section>
+
+    <section class="section" id="freertos-usage">
+      <h2>7. Using CAN in FreeRTOS</h2>
+      <p>
+        The CAN implementation in this project is intentionally split into FreeRTOS tasks. That makes the firmware more organized, easier to reason about, and safer than placing all CAN I/O directly in the main loop.
+      </p>
+
+      <div class="card">
+        <h3>Why tasks help</h3>
+        <ul class="hero-list">
+          <li>Keep the main function simple</li>
+          <li>Avoid blocking the whole firmware while waiting for a mailbox or FIFO state</li>
+          <li>Separate transmit and receive activity into dedicated tasks</li>
+          <li>Make debugging and timing analysis easier</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Recommended task structure</h3>
+        <pre>Task A: periodic transmit task
+Task B: periodic receive task
+Task C: application logic / state machine
+Task D: LED or diagnostics task</pre>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Transmit task pattern</h3>
+        <pre>static void CanTxTask_250ms(void *pvParameters) {
+    TickType_t lastWake = xTaskGetTickCount();
+    const TickType_t period = pdMS_TO_TICKS(250);
+
+    for (;;) {
+        prvCanTransmitStdFrame(0x123, payload, 8);
+        vTaskDelayUntil(&lastWake, period);
+    }
+}</pre>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Receive task pattern</h3>
+        <pre>static void CanRxTask_100ms(void *pvParameters) {
+    TickType_t lastWake = xTaskGetTickCount();
+    const TickType_t period = pdMS_TO_TICKS(100);
+
+    for (;;) {
+        while ((CAN1-&gt;RF0R & CAN_RF0R_FMP0) != 0U) {
+            // read FIFO frame
+            // store ID, DLC, and payload
+            // release FIFO mailbox
+        }
+        vTaskDelayUntil(&lastWake, period);
+    }
+}</pre>
+      </div>
+
+      <div class="callout">
+        <strong>Scheduling rule of thumb:</strong> keep CAN tasks periodic, short, and predictable. Avoid long blocking loops inside the CAN tasks unless the design explicitly requires them.
+      </div>
+    </section>
+
+    <section class="section" id="troubleshooting">
+      <h2>8. Troubleshooting and best practices</h2>
+      <div class="two-col">
+        <div class="card">
+          <h3>Common symptoms</h3>
+          <ul class="hero-list">
+            <li>No traffic appears at all -> likely missing transceiver or wrong pins</li>
+            <li>Frames transmit but never ACK -> bus termination or grounding issue</li>
+            <li>Frames are received inconsistently -> wrong bit timing or poor wiring</li>
+            <li>Receive FIFO never fills -> filter configuration too restrictive</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Practical checks</h3>
+          <ul class="hero-list">
+            <li>Confirm your transceiver wiring and power</li>
+            <li>Verify 120 ohm termination at the bus ends</li>
+            <li>Confirm the CAN bit timing matches the bus</li>
+            <li>Use a logic analyzer or CAN dongle for debugging</li>
+            <li>Inspect the receive and transmit status bits</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h3>Best practices</h3>
+        <ul class="hero-list">
+          <li>Start with a simple standard frame and a single known ID</li>
+          <li>Use 500 kbps or 1 Mbps for early experiments</li>
+          <li>Keep payload sizes small and fixed</li>
+          <li>Do not mix too many responsibilities inside the same task</li>
+          <li>Prefer queues for passing received CAN data to application tasks</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="quick-reference">
+      <h2>9. Quick reference</h2>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Topic</th>
+              <th>Recommended starting point</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Bus speed</td><td>500 kbps</td></tr>
+            <tr><td>Identifier</td><td>11-bit standard ID</td></tr>
+            <tr><td>Payload size</td><td>Up to 8 bytes</td></tr>
+            <tr><td>Termination</td><td>120 ohm at each end of the bus</td></tr>
+            <tr><td>STM32 pins</td><td>PB8/PB9 for CAN1</td></tr>
+            <tr><td>Transceiver</td><td>MCP2551, SN65HVD230, TJA1050, or similar</td></tr>
+            <tr><td>FreeRTOS pattern</td><td>one transmit task + one receive task</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>10. Final thoughts</h2>
+      <p>
+        CAN is one of the most useful communication protocols in embedded systems because it gives you robust, shared, multi-node messaging with surprisingly simple wiring. Once you understand the basics of arbitration, ACK, CRC, filtering, and timing, you can build reliable systems that scale from a single board to a full distributed control network.
+      </p>
+      <p>
+        For this STM32F407 project, the current implementation already provides a practical foundation: transmit a standard frame, receive frames into FIFO0, and coordinate both activities from FreeRTOS tasks. That is enough to start experimenting, learning, and then evolving the design into a more production-ready driver.
+      </p>
+    </section>
+  </div>
+</body>
+</html>
