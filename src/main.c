@@ -9,6 +9,7 @@
 #include <stddef.h>
 /* Include the STM32F4 CMSIS header that exposes the peripheral register layout. */
 #include "stm32f4xx.h"
+#include "can1.h"
 
 /* Include the FreeRTOS core definitions used by tasks and scheduling helpers. */
 #include "FreeRTOS.h"
@@ -19,17 +20,45 @@
 #define MODER_WIDTH 2U
 /* Define the default standard CAN identifier used by the transmit task. */
 #define CAN_STD_ID  0x123U
+/* Define the one standard data-frame identifier that CAN1 accepts and stores. */
+#define CAN_RX_STD_ID 0x321U
 /* Define the default payload length used by the transmit and receive helpers. */
-#define CAN_DLC     8U
+#define CAN_DLC     CAN1_MAX_DLC
 
-/* Store the latest received CAN identifier in a file-scope volatile variable. */
-static volatile uint32_t g_can_rx_id = 0U;
-/* Store the latest received CAN DLC in a file-scope volatile variable. */
-static volatile uint8_t g_can_rx_dlc = 0U;
-/* Store the latest received CAN payload bytes in a file-scope volatile buffer. */
-static volatile uint8_t g_can_rx_data[CAN_DLC] = {0U};
-/* Store the number of frames that have been received so far. */
-static volatile uint32_t g_can_rx_count = 0U;
+/* Store the latest hardware-filtered frame for use by the rest of the firmware. */
+volatile Can1RxFrame g_can1_rx_latest = {0U};
+/* Increment before and after an update so readers can obtain a coherent snapshot. */
+static volatile uint32_t g_can1_rx_sequence = 0U;
+
+/* Copy the latest received frame without exposing a partially-written ISR update. */
+int32_t Can1CopyLatestRxFrame(Can1RxFrame *destination) {
+    uint32_t sequence_before;
+    uint32_t sequence_after;
+
+    if (destination == NULL) {
+        return -1;
+    }
+
+    for (;;) {
+        sequence_before = g_can1_rx_sequence;
+        if ((sequence_before & 1U) != 0U) {
+            continue;
+        }
+
+        destination->id = g_can1_rx_latest.id;
+        destination->dlc = g_can1_rx_latest.dlc;
+        for (uint32_t i = 0U; i < CAN_DLC; i++) {
+            destination->data[i] = g_can1_rx_latest.data[i];
+        }
+        destination->count = g_can1_rx_latest.count;
+        sequence_after = g_can1_rx_sequence;
+        if ((sequence_before == sequence_after) && ((sequence_after & 1U) == 0U)) {
+            break;
+        }
+    }
+
+    return (destination->count == 0U) ? -2 : 0;
+}
 
 /* FreeRTOS runtime / linker symbols */
 /* Define the system clock frequency required by the FreeRTOS port layer. */
@@ -239,93 +268,63 @@ static void CanTxTask_250ms(void *pvParameters) {
     }
 }
 
-/* Configure filter bank 0 to accept all standard frames into FIFO0 */
-/* Define a helper that programs the CAN filter bank to accept the incoming frames. */
+/* Configure filter bank 0 to accept CAN_RX_STD_ID standard data frames into FIFO0. */
 static void prvCanConfigureRxFilter(void) {
     /* Enter filter initialization mode so the filter registers can be reprogrammed. */
     CAN1->FMR |= CAN_FMR_FINIT;
+    /* Reserve filter banks 0 through 13 for CAN1; CAN2 is not used in this project. */
+    CAN1->FMR = (CAN1->FMR & ~CAN_FMR_CAN2SB) | (14U << CAN_FMR_CAN2SB_Pos);
     /* Disable the filter activation bit for filter bank 0 before reconfiguring it. */
     CAN1->FA1R &= ~CAN_FA1R_FACT0;
     /* Configure filter bank 0 as a mask mode filter rather than a list mode filter. */
     CAN1->FM1R &= ~CAN_FM1R_FBM0;
     /* Configure filter bank 0 as a single 32-bit scale filter. */
     CAN1->FS1R |= CAN_FS1R_FSC0;
-    /* Clear the first filter register so the filter does not match a specific ID. */
-    CAN1->sFilterRegister[0].FR1 = 0U;
-    /* Clear the second filter register so the filter does not match a specific ID. */
-    CAN1->sFilterRegister[0].FR2 = 0U;
+    /* Route filter-bank-0 matches to receive FIFO0. */
+    CAN1->FFA1R &= ~CAN_FFA1R_FFA0;
+    /* Put the required 11-bit identifier into the standard-ID position. */
+    CAN1->sFilterRegister[0].FR1 = (CAN_RX_STD_ID << CAN_RI0R_STID_Pos);
+    /* Compare all ID bits and require a standard (IDE=0), data (RTR=0) frame. */
+    CAN1->sFilterRegister[0].FR2 = CAN_RI0R_STID_Msk | CAN_RI0R_IDE | CAN_RI0R_RTR;
     /* Re-enable the filter bank after programming the filter registers. */
     CAN1->FA1R |= CAN_FA1R_FACT0;
     /* Exit filter initialization mode and allow the filter to become active. */
     CAN1->FMR &= ~CAN_FMR_FINIT;
 }
 
-/* Poll FIFO0 and store the latest received frame */
-/* Define a task that polls FIFO0 and records the latest received frame. */
-static void CanRxTask_100ms(void *pvParameters) {
-    /* Mark the unused task parameter so the compiler does not warn about it. */
-    (void)pvParameters;
-    /* Capture the current tick count so this task can remain periodic. */
-    TickType_t xLastWakeTime = xTaskGetTickCount();
-    /* Convert 100 milliseconds into a FreeRTOS tick count. */
-    const TickType_t xPeriod = pdMS_TO_TICKS(100);
+/* Read every pending FIFO0 frame and retain the most recent accepted frame. */
+void CAN1_RX0_IRQHandler(void) {
+    while ((CAN1->RF0R & CAN_RF0R_FMP0) != 0U) {
+        uint32_t rir = CAN1->sFIFOMailBox[0].RIR;
+        uint32_t rdtr = CAN1->sFIFOMailBox[0].RDTR;
+        uint32_t rdlr = CAN1->sFIFOMailBox[0].RDLR;
+        uint32_t rdhr = CAN1->sFIFOMailBox[0].RDHR;
+        uint8_t dlc = (uint8_t)(rdtr & 0x0FU);
 
-    /* Loop forever and consume any frames pending in FIFO0 every wake-up interval. */
-    for(;;) {
-        /* Process every frame that is currently pending in FIFO0. */
-        while ((CAN1->RF0R & CAN_RF0R_FMP0) != 0U) {
-            /* Read the identifier register from the FIFO output mailbox. */
-            uint32_t rir = CAN1->sFIFOMailBox[0].RIR;
-            /* Read the data-length and timestamp register from the FIFO output mailbox. */
-            uint32_t rdtr = CAN1->sFIFOMailBox[0].RDTR;
-            /* Extract the data-length code from the receive data register. */
-            uint8_t dlc = (uint8_t)(rdtr & 0x0FU);
-            /* Create a temporary payload buffer for copying the received bytes. */
-            uint8_t payload[CAN_DLC] = {0U};
-
-            /* Clamp the DLC to the maximum payload size used by this demo. */
-            if (dlc > CAN_DLC) {
-                /* Reduce the effective DLC to the supported size. */
-                dlc = CAN_DLC;
-            }
-
-            /* Copy the low data register bytes into the temporary payload buffer. */
-            payload[0] = (uint8_t)(CAN1->sFIFOMailBox[0].RDLR & 0xFFU);
-            /* Copy the next byte from the low data register into the temporary payload buffer. */
-            payload[1] = (uint8_t)((CAN1->sFIFOMailBox[0].RDLR >> 8U) & 0xFFU);
-            /* Copy the next byte from the low data register into the temporary payload buffer. */
-            payload[2] = (uint8_t)((CAN1->sFIFOMailBox[0].RDLR >> 16U) & 0xFFU);
-            /* Copy the next byte from the low data register into the temporary payload buffer. */
-            payload[3] = (uint8_t)((CAN1->sFIFOMailBox[0].RDLR >> 24U) & 0xFFU);
-            /* Copy the first byte from the high data register into the temporary payload buffer. */
-            payload[4] = (uint8_t)(CAN1->sFIFOMailBox[0].RDHR & 0xFFU);
-            /* Copy the next byte from the high data register into the temporary payload buffer. */
-            payload[5] = (uint8_t)((CAN1->sFIFOMailBox[0].RDHR >> 8U) & 0xFFU);
-            /* Copy the next byte from the high data register into the temporary payload buffer. */
-            payload[6] = (uint8_t)((CAN1->sFIFOMailBox[0].RDHR >> 16U) & 0xFFU);
-            /* Copy the last byte from the high data register into the temporary payload buffer. */
-            payload[7] = (uint8_t)((CAN1->sFIFOMailBox[0].RDHR >> 24U) & 0xFFU);
-
-            /* Extract the standard CAN identifier from the FIFO mailbox identifier register. */
-            g_can_rx_id = ((rir & CAN_RI0R_STID_Msk) >> CAN_RI0R_STID_Pos);
-            /* Store the accepted DLC into the global receive status variable. */
-            g_can_rx_dlc = dlc;
-            /* Copy the received bytes into the global payload buffer one byte at a time. */
-            for (uint32_t i = 0U; i < dlc; i++) {
-                /* Store each received byte in the global data buffer. */
-                g_can_rx_data[i] = payload[i];
-            }
-            /* Increment the global receive counter after storing each frame. */
-            g_can_rx_count++;
-
-            /* Toggle PD15 to provide a visible indication that a CAN frame was received. */
-            GPIOD->ODR ^= (1U << 15);
-            /* Release the FIFO output mailbox so the next pending frame can be read. */
-            CAN1->RF0R |= CAN_RF0R_RFOM0;
+        if (dlc > CAN_DLC) {
+            dlc = CAN_DLC;
         }
 
-        /* Delay until the next periodic wake-up time. */
-        vTaskDelayUntil(&xLastWakeTime, xPeriod);
+        /* Mark the shared frame as being updated before changing any of its fields. */
+        g_can1_rx_sequence++;
+        g_can1_rx_latest.id = (rir & CAN_RI0R_STID_Msk) >> CAN_RI0R_STID_Pos;
+        g_can1_rx_latest.dlc = dlc;
+        g_can1_rx_latest.data[0] = (uint8_t)(rdlr & 0xFFU);
+        g_can1_rx_latest.data[1] = (uint8_t)((rdlr >> 8U) & 0xFFU);
+        g_can1_rx_latest.data[2] = (uint8_t)((rdlr >> 16U) & 0xFFU);
+        g_can1_rx_latest.data[3] = (uint8_t)((rdlr >> 24U) & 0xFFU);
+        g_can1_rx_latest.data[4] = (uint8_t)(rdhr & 0xFFU);
+        g_can1_rx_latest.data[5] = (uint8_t)((rdhr >> 8U) & 0xFFU);
+        g_can1_rx_latest.data[6] = (uint8_t)((rdhr >> 16U) & 0xFFU);
+        g_can1_rx_latest.data[7] = (uint8_t)((rdhr >> 24U) & 0xFFU);
+        g_can1_rx_latest.count++;
+        /* Mark the shared frame as stable before application code can copy it. */
+        g_can1_rx_sequence++;
+
+        /* Toggle PD15 to make an accepted receive event visible on the board. */
+        GPIOD->ODR ^= (1U << 15);
+        /* Release the FIFO output mailbox after every register has been copied. */
+        CAN1->RF0R |= CAN_RF0R_RFOM0;
     }
 }
 
@@ -409,6 +408,11 @@ static void prvSetupHardware(void) {
         ;
     }
 
+    /* Interrupt whenever FIFO0 receives a frame accepted by filter bank 0. */
+    CAN1->IER |= CAN_IER_FMPIE0;
+    /* The handler only copies data and does not call FreeRTOS APIs. */
+    NVIC_SetPriority(CAN1_RX0_IRQn, 6U);
+    NVIC_EnableIRQ(CAN1_RX0_IRQn);
 }
 
 /**
@@ -430,9 +434,6 @@ int main(void) {
     xTaskCreate(BlinkTask_2000ms, "Blink_2000ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
     /* Create the periodic CAN transmit task that sends a sample frame every 250 ms. */
     xTaskCreate(CanTxTask_250ms, "CanTx_250ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-    /* Create the periodic CAN receive task that polls FIFO0 and records incoming frames. */
-    //xTaskCreate(CanRxTask_100ms, "CanRx_100ms", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
-
     /* Start scheduler */
     /* Start the FreeRTOS scheduler so the created tasks begin running. */
     vTaskStartScheduler();

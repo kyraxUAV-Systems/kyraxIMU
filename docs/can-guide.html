@@ -1,536 +1,263 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CAN Zero-to-Hero Guide for STM32F407</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STM32F407 CAN1 Practical Guide</title>
   <style>
-    :root {
-      --bg: #07111f;
-      --panel: #0f1b2d;
-      --panel-2: #14253d;
-      --text: #e8f1ff;
-      --muted: #8da0bf;
-      --accent: #5ee7ff;
-      --accent-2: #7c7cff;
-      --good: #46d39a;
-      --warn: #ffba5a;
-      --danger: #ff6b6b;
-      --border: #22334f;
-      --shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(94,231,255,0.12), transparent 32%),
-        linear-gradient(135deg, var(--bg), #050a12 75%);
-      color: var(--text);
-      line-height: 1.7;
-    }
-
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    .page {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 32px 24px 90px;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, rgba(20,37,61,0.96), rgba(7,17,31,0.95));
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 36px;
-      box-shadow: var(--shadow);
-      margin-bottom: 28px;
-    }
-
-    .hero h1 {
-      font-size: clamp(2rem, 3vw, 2.8rem);
-      margin: 0 0 10px;
-      line-height: 1.15;
-    }
-
-    .hero p {
-      font-size: 1.03rem;
-      color: var(--muted);
-      max-width: 780px;
-      margin: 0;
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .pill {
-      background: rgba(94,231,255,0.12);
-      border: 1px solid rgba(94,231,255,0.25);
-      color: var(--accent);
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 0.93rem;
-    }
-
-    .grid {
-      display: grid;
-      gap: 20px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-bottom: 20px;
-    }
-
-    .card, .toc, .note, .code-block, .table-card {
-      background: rgba(15, 27, 45, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .card, .toc, .note, .table-card { padding: 22px 24px; }
-    .code-block { padding: 16px 18px; overflow-x: auto; }
-
-    .card h2, .toc h2, .note h2, .table-card h2 { margin-top: 0; font-size: 1.22rem; }
-
-    .muted { color: var(--muted); }
-    .accent { color: var(--accent); }
-    .good { color: var(--good); }
-    .warn { color: var(--warn); }
-    .danger { color: var(--danger); }
-
-    .toc ul { padding-left: 18px; }
-    .toc li { margin: 6px 0; }
-
-    .step {
-      border-left: 3px solid var(--accent);
-      padding-left: 14px;
-      margin: 12px 0 16px;
-    }
-
-    code, pre {
-      font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
-    }
-
-    pre {
-      margin: 0;
-      color: #dce8ff;
-      font-size: 0.95rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.95rem;
-    }
-
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: top;
-      text-align: left;
-    }
-
-    th { color: var(--accent); }
-
-    .hero-list { padding-left: 18px; }
-    .hero-list li { margin: 8px 0; }
-
-    .callout {
-      background: linear-gradient(90deg, rgba(94,231,255,0.12), rgba(124,124,255,0.16));
-      border: 1px solid rgba(94,231,255,0.24);
-      padding: 14px 16px;
-      border-radius: 14px;
-      margin: 16px 0;
-    }
-
-    .two-col { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; }
-    @media (max-width: 900px) {
-      .grid, .two-col { grid-template-columns: 1fr; }
-    }
-
-    .section { margin-top: 24px; }
-    .section h2 { margin-bottom: 8px; }
-    .section p { margin-top: 0; }
+    :root { --ink:#18212b; --muted:#506070; --line:#d7dde3; --panel:#f5f8fb; --code:#14212d; --accent:#006b92; --warn:#7a4b00; }
+    * { box-sizing:border-box; } body { margin:0; font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--ink); }
+    main { max-width:1100px; margin:auto; padding:36px 24px 80px; } h1,h2,h3 { line-height:1.25; } h1 { font-size:2.4rem; margin-bottom:.2rem; } h2 { border-bottom:2px solid var(--line); margin-top:3rem; padding-bottom:.35rem; } h3 { margin-top:2rem; }
+    .lead { color:var(--muted); font-size:1.1rem; } .note,.warning { padding:14px 18px; border-left:5px solid var(--accent); background:var(--panel); margin:18px 0; }
+    .warning { border-color:#c68200; background:#fff9ed; color:#513300; } nav { background:var(--panel); padding:18px 22px; border-radius:8px; } nav ol { columns:2; margin-bottom:0; }
+    a { color:var(--accent); } code { background:#edf1f4; padding:.08em .28em; border-radius:3px; } pre { background:var(--code); color:#edf6ff; padding:16px; border-radius:7px; overflow:auto; line-height:1.45; } pre code { background:none; padding:0; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; } th,td { border:1px solid var(--line); padding:9px 10px; text-align:left; vertical-align:top; } th { background:var(--panel); } .small { color:var(--muted); font-size:.92rem; }
+    @media (max-width:700px) { main { padding:24px 16px; } nav ol { columns:1; } table { font-size:.9rem; } }
   </style>
 </head>
 <body>
-  <div class="page">
-    <section class="hero">
-      <h1>CAN Zero-to-Hero Guide for STM32F407</h1>
-      <p>
-        This document is a complete, practical guide to Controller Area Network (CAN) from first principles to real-world STM32F407 usage. It covers the physical layer, protocol behavior, frame formats, timing, transceivers, troubleshooting, and how this repository’s FreeRTOS-based CAN implementation works.
-      </p>
-      <div class="pill-row">
-        <span class="pill">Zero to Hero</span>
-        <span class="pill">STM32F407 + CAN1</span>
-        <span class="pill">FreeRTOS integration</span>
-        <span class="pill">Practical wiring and debugging</span>
-      </div>
-    </section>
+<main>
+  <h1>STM32F407 CAN1: a practical bxCAN guide</h1>
+  <p class="lead">A self-contained, register-level recipe for the STM32F407 CAN1 peripheral: hardware, pin muxing, timing, transmit, filtered receive, interrupts, debugging, and the USB-CAN tools in this repository.</p>
 
-    <div class="grid">
-      <section class="toc">
-        <h2>Table of contents</h2>
-        <ul>
-          <li><a href="#what-is-can">What CAN is and why it matters</a></li>
-          <li><a href="#how-can-works">How CAN works under the hood</a></li>
-          <li><a href="#frame-types">Frame types and structure</a></li>
-          <li><a href="#bus-physical-layer">Physical layer and transceivers</a></li>
-          <li><a href="#bit-timing">Bit timing and baud rates</a></li>
-          <li><a href="#stm32f407-setup">STM32F407 CAN setup</a></li>
-          <li><a href="#freertos-usage">Using CAN in FreeRTOS</a></li>
-          <li><a href="#troubleshooting">Troubleshooting and best practices</a></li>
-          <li><a href="#quick-reference">Quick reference</a></li>
-        </ul>
-      </section>
-      <section class="note">
-        <h2>Core idea in one sentence</h2>
-        <p>
-          CAN is a robust, message-based, multi-node serial bus designed for embedded systems where many devices must communicate reliably with low wiring cost and deterministic behavior.
-        </p>
-        <div class="callout">
-          <strong>Key strength:</strong> CAN uses arbitration on the bus so that multiple nodes can transmit without a central controller, and the winner of contention continues sending its message.
-        </div>
-      </section>
-    </div>
+  <div class="note"><strong>Scope.</strong> This guide is for <em>classic CAN</em> (up to 8 data bytes) on the STM32F407 bxCAN controller. It uses CAN1, PB8/PB9, a 16 MHz APB1 clock, 500 kbit/s, periodic ID <code>0x123</code> transmission, and filtered ID <code>0x321</code> reception. It does not apply to FDCAN peripherals or CAN FD.</div>
 
-    <section class="section" id="what-is-can">
-      <h2>1. What CAN is and why it matters</h2>
-      <p>
-        Controller Area Network, or CAN, is a communication standard created for automotive and industrial systems. Its design goals were simple but powerful: allow many controllers to exchange messages over a shared two-wire bus with high reliability, low overhead, and deterministic timing.
-      </p>
-      <p>
-        In a modern embedded project, CAN is useful whenever you have multiple microcontrollers, sensors, actuators, or boards that need to share data without using a huge number of dedicated wires. It is common in vehicles, robotics, industrial automation, motor controllers, battery management systems, and test equipment.
-      </p>
-      <div class="two-col">
-        <div class="card">
-          <h3>Why CAN is popular</h3>
-          <ul class="hero-list">
-            <li>Multi-node communication with just two wires</li>
-            <li>Built-in arbitration without a central bus master</li>
-            <li>Excellent reliability for noisy environments</li>
-            <li>Very low protocol overhead compared with higher-layer networking stacks</li>
-            <li>Widely supported by MCUs, toolchains, and hardware</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>What makes it different from UART or SPI</h3>
-          <ul class="hero-list">
-            <li>UART is point-to-point and simple but not multi-node</li>
-            <li>SPI requires a dedicated chip select line per device</li>
-            <li>CAN allows many nodes to share the same bus naturally</li>
-            <li>CAN supports collision resolution at the bit level</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+  <nav>
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#mental-model">What must be present</a></li><li><a href="#hardware">Wire the hardware</a></li>
+      <li><a href="#pins">Configure PB8/PB9</a></li><li><a href="#clock">Clock, reset, sleep, and init mode</a></li>
+      <li><a href="#timing">Calculate bit timing</a></li><li><a href="#tx">Transmit a frame</a></li>
+      <li><a href="#filters">Filter ID 0x321</a></li><li><a href="#rx">Receive and store frames</a></li>
+      <li><a href="#interrupts">Enable the RX interrupt</a></li><li><a href="#application">Use received data later</a></li>
+      <li><a href="#tools">Use the USB-CAN tools</a></li><li><a href="#test">Bring-up checklist</a></li>
+      <li><a href="#registers">Register reference</a></li><li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+  </nav>
 
-    <section class="section" id="how-can-works">
-      <h2>2. How CAN works under the hood</h2>
-      <p>
-        CAN is message-oriented rather than byte-stream-oriented. Instead of sending a continuous stream of bytes like UART, each node transmits packets called frames. These frames contain identifiers, control bits, data, and error-checking information.
-      </p>
-      <div class="card">
-        <h3>The bus in practice</h3>
-        <p>
-          The bus is physically two wires: CANH and CANL. They carry differential signals. The receiver interprets the voltage difference between the wires rather than the absolute voltage on a single wire. That makes CAN resistant to noise and common-mode interference.
-        </p>
-        <div class="callout">
-          <strong>Important concept:</strong> CAN nodes do not transmit in a fixed time slot. They compete for the bus using arbitration. The node that wins continues transmitting its frame.
-        </div>
-      </div>
+  <h2 id="mental-model">1. The mental model</h2>
+  <p>CAN is a shared, differential bus. The STM32 controller creates and consumes the digital <code>CAN_TX</code>/<code>CAN_RX</code> signals; it cannot drive CANH/CANL directly. A CAN transceiver converts those logic pins to the physical bus. Every node must use the same bitrate. A correctly received frame is acknowledged by at least one other active node.</p>
+  <table><thead><tr><th>Layer</th><th>STM32F407 item</th><th>Job</th></tr></thead><tbody>
+    <tr><td>Application</td><td>Tasks / your code</td><td>Decides which ID and bytes to send; consumes a received snapshot.</td></tr>
+    <tr><td>Controller</td><td>CAN1 / bxCAN</td><td>Arbitration, CRC, ACK check, filters, three TX mailboxes, two RX FIFOs.</td></tr>
+    <tr><td>MCU pins</td><td>PB9 TX, PB8 RX</td><td>3.3 V digital signals between controller and transceiver.</td></tr>
+    <tr><td>Physical bus</td><td>Transceiver, CANH, CANL</td><td>Differential electrical signaling and bus termination.</td></tr>
+  </tbody></table>
+  <div class="warning"><strong>Do not connect CANH/CANL to PB8/PB9.</strong> PB8/PB9 connect to the transceiver’s logic-side RXD/TXD pins. The analyzer may observe PB9 as a digital signal, but use a proper CAN interface/transceiver to observe CANH/CANL.</div>
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Core protocol concepts</h3>
-        <ul class="hero-list">
-          <li><strong>Arbitration:</strong> resolves which node gets to send when multiple nodes start transmitting at once.</li>
-          <li><strong>ACK:</strong> confirms that at least one node received the frame correctly.</li>
-          <li><strong>CRC:</strong> detects bit errors in the transmitted frame.</li>
-          <li><strong>Error handling:</strong> nodes can signal errors and possibly enter bus-off state if repeated errors occur.</li>
-          <li><strong>Bit stuffing:</strong> inserted bits keep the stream from staying too long in one state, helping with clock recovery.</li>
-        </ul>
-      </div>
-    </section>
+  <h2 id="hardware">2. Hardware that must work first</h2>
+  <ol>
+    <li>Connect <strong>PB9 → transceiver TXD input</strong> and <strong>PB8 ← transceiver RXD output</strong>. Check the names on the transceiver data sheet: names are often from the transceiver’s point of view.</li>
+    <li>Power the transceiver at a voltage compatible with its logic pins. Use a 3.3 V-compatible part, or a verified level-compatible interface.</li>
+    <li>Join MCU and transceiver ground.</li>
+    <li>Connect CANH to CANH and CANL to CANL. A bus needs two active nodes for normal communication.</li>
+    <li>Fit 120 Ω between CANH and CANL at each <em>physical end</em> of the bus, not at every node.</li>
+    <li>Ensure the transceiver is not in standby/silent/shutdown mode.</li>
+  </ol>
+  <p>PB9 is normally recessive high and drives low for a dominant CAN bit. PB8 is an input; it only changes when the transceiver drives RXD. A logic analyzer alone cannot acknowledge a frame, so it cannot make an isolated transmitter produce a valid, ACKed bus frame.</p>
 
-    <section class="section" id="frame-types">
-      <h2>3. Frame types and structure</h2>
-      <p>
-        The most important frame is the data frame. CAN also supports remote frames and error frames, though most practical applications use data frames.
-      </p>
+  <h2 id="pins">3. Enable CAN1 on PB8/PB9</h2>
+  <p>On this STM32F407 package, PB8 is <code>CAN1_RX</code> and PB9 is <code>CAN1_TX</code> when each pin selects alternate function 9 (AF9). The GPIO configuration has four parts:</p>
+  <table><thead><tr><th>Register</th><th>PB8/PB9 setting</th><th>Why</th></tr></thead><tbody>
+    <tr><td><code>RCC_AHB1ENR</code></td><td><code>GPIOBEN=1</code></td><td>Clock the GPIO registers before writing them.</td></tr>
+    <tr><td><code>GPIOB_MODER</code></td><td><code>10b</code> for pins 8 and 9</td><td>Hands the pins to the alternate-function mux.</td></tr>
+    <tr><td><code>GPIOB_AFRH</code></td><td><code>AFSEL8=9</code>, <code>AFSEL9=9</code></td><td>Connects that mux to CAN1 instead of another peripheral.</td></tr>
+    <tr><td><code>GPIOB_OSPEEDR</code></td><td>high speed</td><td>Gives clean edges on the logic-side CAN transmit signal.</td></tr>
+    <tr><td><code>GPIOB_PUPDR</code></td><td>no pull</td><td>The transceiver owns the RXD idle level; do not fight it.</td></tr>
+  </tbody></table>
+  <pre><code>RCC-&gt;AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+GPIOB-&gt;MODER  = (GPIOB-&gt;MODER &amp; ~((3U &lt;&lt; 16) | (3U &lt;&lt; 18)))
+              |  ((2U &lt;&lt; 16) | (2U &lt;&lt; 18));
+GPIOB-&gt;AFR[1] = (GPIOB-&gt;AFR[1] &amp; ~((0xFU &lt;&lt; 0) | (0xFU &lt;&lt; 4)))
+              |  ((9U &lt;&lt; 0) | (9U &lt;&lt; 4));</code></pre>
 
-      <div class="card">
-        <h3>Standard data frame layout</h3>
-        <pre>SOF | Identifier | RTR | IDE | DLC | Data bytes | CRC | ACK | EOF | IFS</pre>
-        <p class="muted">
-          The exact field names vary slightly by implementation, but the overall idea is the same: an identifier, control bits, payload, integrity checks, and delimiters.
-        </p>
-      </div>
+  <h2 id="clock">4. Start bxCAN in the correct state</h2>
+  <p>CAN1 is on APB1. The controller starts asleep and configuration-protects key registers outside initialization mode. Follow this order every time:</p>
+  <pre><code>RCC-&gt;APB1ENR  |= RCC_APB1ENR_CAN1EN;      // enable peripheral clock
+RCC-&gt;APB1RSTR |= RCC_APB1RSTR_CAN1RST;    // known reset state
+RCC-&gt;APB1RSTR &amp;= ~RCC_APB1RSTR_CAN1RST;
 
-      <div class="table-card" style="margin-top: 16px;">
-        <h3>Common frame fields</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th>Meaning</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>SOF</td><td>Start of frame bit</td></tr>
-            <tr><td>Identifier</td><td>Message ID used for arbitration and filtering</td></tr>
-            <tr><td>RTR</td><td>Remote transmission request bit</td></tr>
-            <tr><td>IDE</td><td>Identifier extension bit, marks standard vs extended format</td></tr>
-            <tr><td>DLC</td><td>Data length code, from 0 to 8 bytes</td></tr>
-            <tr><td>Data</td><td>The actual payload bytes</td></tr>
-            <tr><td>CRC</td><td>Cycle redundancy check for error detection</td></tr>
-            <tr><td>ACK</td><td>Receiver confirms valid reception</td></tr>
-            <tr><td>EOF</td><td>End-of-frame delimiter</td></tr>
-          </tbody>
-        </table>
-      </div>
+CAN1-&gt;MCR &amp;= ~CAN_MCR_SLEEP;              // wake controller
+while (CAN1-&gt;MSR &amp; CAN_MSR_SLAK) { }
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Standard vs extended frames</h3>
-        <ul class="hero-list">
-          <li><strong>Standard frame:</strong> 11-bit identifier</li>
-          <li><strong>Extended frame:</strong> 29-bit identifier</li>
-          <li>Extended frames are more flexible but slightly more overhead</li>
-          <li>Most beginner projects begin with standard frames</li>
-        </ul>
-      </div>
-    </section>
+CAN1-&gt;MCR |= CAN_MCR_INRQ;                 // enter init mode
+while (!(CAN1-&gt;MSR &amp; CAN_MSR_INAK)) { }
 
-    <section class="section" id="bus-physical-layer">
-      <h2>4. Physical layer and transceivers</h2>
-      <p>
-        The CAN controller inside the MCU is not the whole bus interface. The controller drives the bus through a transceiver. The transceiver converts the MCU’s logic-level signals into the differential CANH/CANL bus signaling required by the standard.
-      </p>
-      <div class="card">
-        <h3>Why the transceiver matters</h3>
-        <ul class="hero-list">
-          <li>It provides the correct differential voltage levels</li>
-          <li>It improves noise immunity</li>
-          <li>It ensures the bus is properly driven and received</li>
-          <li>It protects the MCU from bus transients</li>
-        </ul>
-      </div>
+/* configure BTR, filters and MCR options here */
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Termination and topology</h3>
-        <p>
-          CAN is normally a single-ended differential bus with a termination resistor at each end of the physical bus. The standard value is usually 120 ohms across CANH/CANL at the two ends of the bus.
-        </p>
-        <div class="callout">
-          <strong>Rule of thumb:</strong> If you have a short bus with only two devices, ensure the transceiver side is correctly terminated and that the common ground reference is adequate.
-        </div>
-      </div>
-    </section>
+CAN1-&gt;MCR &amp;= ~CAN_MCR_INRQ;                // enter normal mode
+while (CAN1-&gt;MSR &amp; CAN_MSR_INAK) { }</code></pre>
+  <p><code>MSR.SLAK</code> and <code>MSR.INAK</code> are hardware acknowledgements. Always wait for them; merely changing <code>MCR</code> does not prove the mode transition finished.</p>
 
-    <section class="section" id="bit-timing">
-      <h2>5. Bit timing and baud rates</h2>
-      <p>
-        CAN timing is more subtle than many beginner UART examples. Each bit is segmented into multiple time quanta. The controller uses propagation, phase, and synchronization segments to sample the bus reliably at the right moment.
-      </p>
-      <div class="card">
-        <h3>Key timing concepts</h3>
-        <ul class="hero-list">
-          <li><strong>BRP:</strong> baud rate prescaler</li>
-          <li><strong>TS1:</strong> time segment 1</li>
-          <li><strong>TS2:</strong> time segment 2</li>
-          <li><strong>SJW:</strong> resynchronization jump width</li>
-        </ul>
-      </div>
-      <div class="code-block" style="margin-top: 16px;">
-        <pre>CAN bit timing is derived from:
-- system clock
-- BRP
-- TS1
-- TS2
-- SJW
+  <h2 id="timing">5. Compute the exact bit timing</h2>
+  <p>The CAN clock is PCLK1. With the reset clock configuration used in this project, PCLK1 is 16 MHz. One CAN bit is:</p>
+  <pre><code>bitrate = PCLK1 / (prescaler × (1 + time-segment-1 + time-segment-2))</code></pre>
+  <p>The bxCAN BTR fields store each quantity <em>minus one</em>. The synchronisation segment is always one time quantum (TQ).</p>
+  <table><thead><tr><th>BTR field</th><th>Stored value</th><th>Actual value</th><th>Current 500 kbit/s setup</th></tr></thead><tbody>
+    <tr><td><code>BRP[9:0]</code></td><td>prescaler − 1</td><td>CAN clock prescaler</td><td>1 → prescaler 2</td></tr>
+    <tr><td><code>TS1[3:0]</code></td><td>segment 1 − 1</td><td>propagation + phase segment 1</td><td>12 → 13 TQ</td></tr>
+    <tr><td><code>TS2[2:0]</code></td><td>segment 2 − 1</td><td>phase segment 2</td><td>1 → 2 TQ</td></tr>
+    <tr><td><code>SJW[1:0]</code></td><td>SJW − 1</td><td>maximum resynchronisation adjustment</td><td>0 → 1 TQ</td></tr>
+  </tbody></table>
+  <pre><code>// 16 MHz / (2 × (1 + 13 + 2)) = 500,000 bit/s; sample point 87.5%
+CAN1-&gt;BTR = (1U &lt;&lt; CAN_BTR_BRP_Pos)
+          | (12U &lt;&lt; CAN_BTR_TS1_Pos)
+          | (1U &lt;&lt; CAN_BTR_TS2_Pos);</code></pre>
+  <table><thead><tr><th>Desired bitrate, PCLK1=16 MHz</th><th>BRP field</th><th>TS1 field</th><th>TS2 field</th><th>Result</th></tr></thead><tbody>
+    <tr><td>1 Mbit/s</td><td>0</td><td>12</td><td>1</td><td>16 MHz / (1 × 16)</td></tr>
+    <tr><td>500 kbit/s</td><td>1</td><td>12</td><td>1</td><td>16 MHz / (2 × 16)</td></tr>
+    <tr><td>250 kbit/s</td><td>3</td><td>12</td><td>1</td><td>16 MHz / (4 × 16)</td></tr>
+    <tr><td>125 kbit/s</td><td>7</td><td>12</td><td>1</td><td>16 MHz / (8 × 16)</td></tr>
+  </tbody></table>
+  <div class="warning">If you later configure the PLL or APB1 prescaler, PCLK1 may no longer be 16 MHz. Recalculate BTR; do not reuse the numbers blindly.</div>
 
-Typical result: 500 kbps or 1 Mbps bus speeds</pre>
-      </div>
-      <p>
-        For a beginner setup, using a standard target such as 500 kbps is often easier than trying to optimize everything from scratch. If your clock is different from the expected value, the timing register values must be recalculated.
-      </p>
-    </section>
+  <h2 id="tx">6. Send a classic CAN data frame</h2>
+  <p>bxCAN has three transmit mailboxes. This project uses mailbox 0. A mailbox is available when <code>TSR.TME0=1</code>. Standard IDs occupy bits 31:21 of <code>TIR</code>; data bytes 0–3 go into <code>TDLR</code> and 4–7 into <code>TDHR</code>, least-significant byte first.</p>
+  <table><thead><tr><th>Register</th><th>What to write</th><th>Critical detail</th></tr></thead><tbody>
+    <tr><td><code>TI0R</code></td><td><code>STID &lt;&lt; 21</code>, IDE=0, RTR=0</td><td>Write it initially with TXRQ clear.</td></tr>
+    <tr><td><code>TDTR</code></td><td>DLC in bits 3:0</td><td>Classic CAN allows 0–8.</td></tr>
+    <tr><td><code>TDLR</code>, <code>TDHR</code></td><td>Payload words</td><td>Load all bytes before requesting TX.</td></tr>
+    <tr><td><code>TI0R.TXRQ</code></td><td>set to 1</td><td><strong>Must be the final write.</strong> It starts transmission immediately.</td></tr>
+  </tbody></table>
+  <pre><code>if (CAN1-&gt;TSR &amp; CAN_TSR_TME0) {
+    CAN1-&gt;sTxMailBox[0].TIR  = 0x123U &lt;&lt; CAN_TI0R_STID_Pos;
+    CAN1-&gt;sTxMailBox[0].TDTR = 8U;
+    CAN1-&gt;sTxMailBox[0].TDLR = 0x40302010U; // bytes: 10 20 30 40
+    CAN1-&gt;sTxMailBox[0].TDHR = 0x80706050U; // bytes: 50 60 70 80
+    CAN1-&gt;sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
+}</code></pre>
+  <p>After completion, inspect <code>TSR.RQCP0</code>, <code>TSR.TXOK0</code>, <code>TSR.ALST0</code>, and <code>TSR.TERR0</code>. The current demo sets <code>MCR.NART</code>: one failed attempt (for example, no ACK) completes rather than retrying continuously. This is helpful for a logic-analyzer test. On a real network, remove NART if normal CAN automatic retransmission is wanted. <code>MCR.ABOM</code> automatically recovers from bus-off.</p>
 
-    <section class="section" id="stm32f407-setup">
-      <h2>6. STM32F407 CAN setup</h2>
-      <p>
-        This repository’s firmware uses CAN1 on the STM32F407 with PB8 and PB9. Those pins are mapped to CAN1 RX and CAN1 TX respectively through the MCU’s alternate function system.
-      </p>
-      <div class="card">
-        <h3>Recommended pin mapping</h3>
-        <ul class="hero-list">
-          <li>PB8 → CAN1_RX</li>
-          <li>PB9 → CAN1_TX</li>
-        </ul>
-      </div>
+  <h2 id="filters">7. Receive only ID 0x321</h2>
+  <p>Filtering occurs before a frame enters FIFO0/FIFO1. This is the correct place to reject unwanted traffic. Filter registers are shared by CAN1 and CAN2; <code>FMR.CAN2SB=14</code> assigns banks 0–13 to CAN1. The project uses bank 0 in 32-bit identifier-mask mode.</p>
+  <table><thead><tr><th>Filter setting</th><th>Value</th><th>Why</th></tr></thead><tbody>
+    <tr><td><code>FMR.FINIT</code></td><td>1 while configuring</td><td>Filter configuration is only safe in filter init mode.</td></tr>
+    <tr><td><code>FA1R.FACT0</code></td><td>0, then 1</td><td>Disable bank 0 before edits; enable it when done.</td></tr>
+    <tr><td><code>FM1R.FBM0</code></td><td>0</td><td>Select identifier-mask mode, not list mode.</td></tr>
+    <tr><td><code>FS1R.FSC0</code></td><td>1</td><td>Select one 32-bit filter pair.</td></tr>
+    <tr><td><code>FFA1R.FFA0</code></td><td>0</td><td>Route accepted frames to FIFO0.</td></tr>
+    <tr><td><code>FR1</code></td><td><code>0x321 &lt;&lt; 21</code></td><td>The expected standard ID in the RIR layout.</td></tr>
+    <tr><td><code>FR2</code></td><td><code>0xFFE00000 | IDE | RTR</code></td><td>Mask: compare all 11 ID bits, IDE, and RTR.</td></tr>
+  </tbody></table>
+  <pre><code>CAN1-&gt;FMR |= CAN_FMR_FINIT;
+CAN1-&gt;FA1R &amp;= ~CAN_FA1R_FACT0;
+CAN1-&gt;FM1R &amp;= ~CAN_FM1R_FBM0;        // mask mode
+CAN1-&gt;FS1R |= CAN_FS1R_FSC0;          // 32-bit scale
+CAN1-&gt;FFA1R &amp;= ~CAN_FFA1R_FFA0;       // FIFO0
+CAN1-&gt;sFilterRegister[0].FR1 = 0x321U &lt;&lt; CAN_RI0R_STID_Pos;
+CAN1-&gt;sFilterRegister[0].FR2 = CAN_RI0R_STID_Msk | CAN_RI0R_IDE | CAN_RI0R_RTR;
+CAN1-&gt;FA1R |= CAN_FA1R_FACT0;
+CAN1-&gt;FMR &amp;= ~CAN_FMR_FINIT;</code></pre>
+  <p>In mask mode, a one in FR2 means “compare this bit”; a zero means “do not care.” To accept any standard <em>data</em> frame, set FR1 to zero and make FR2 equal <code>CAN_RI0R_IDE | CAN_RI0R_RTR</code>. To accept multiple exact IDs, use list mode or more banks.</p>
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Hardware wiring example</h3>
-        <pre>STM32F407 PB8  -> transceiver RX pin
-STM32F407 PB9  -> transceiver TX pin
-Transceiver CANH -> CAN bus CANH
-Transceiver CANL -> CAN bus CANL
-Ground shared between MCU and transceiver</pre>
-      </div>
+  <h2 id="rx">8. Drain FIFO0 and store the latest frame</h2>
+  <p>FIFO0 contains only frames accepted by the filter. <code>RF0R.FMP0</code> is the number of pending entries (0–3). Read the four mailbox registers first, then write <code>RF0R.RFOM0=1</code> to release that entry. Releasing before reading discards the data.</p>
+  <table><thead><tr><th>Receive mailbox register</th><th>Meaning</th></tr></thead><tbody>
+    <tr><td><code>RIR</code></td><td>Identifier. For a standard frame, ID = <code>(RIR &amp; STID_Msk) &gt;&gt; 21</code>. IDE tells standard versus extended; RTR tells data versus remote.</td></tr>
+    <tr><td><code>RDTR</code></td><td>DLC in bits 3:0, timestamp in higher bits when enabled.</td></tr>
+    <tr><td><code>RDLR</code></td><td>Data bytes 0, 1, 2, 3 in byte lanes 0, 1, 2, 3.</td></tr>
+    <tr><td><code>RDHR</code></td><td>Data bytes 4, 5, 6, 7 in byte lanes 0, 1, 2, 3.</td></tr>
+  </tbody></table>
+  <p>The current firmware runs this work in <code>CAN1_RX0_IRQHandler</code>, not a slow polling task. It copies each accepted frame to <code>g_can1_rx_latest</code>, increments <code>count</code>, then releases FIFO0. When several matching frames arrive quickly, the newest is retained; use a queue/ring buffer if every frame matters.</p>
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Register-level overview</h3>
-        <pre>1. Enable GPIOB and CAN1 clock
-2. Configure PB8/PB9 as alternate function
-3. Enter initialization mode
-4. Set bit timing
-5. Configure receive filter
-6. Leave initialization mode
-7. Enable transmission</pre>
-      </div>
+  <h2 id="interrupts">9. Connect the RX interrupt correctly</h2>
+  <p>Three things are required. Missing any one means frames can sit in FIFO0 without reaching your code.</p>
+  <ol>
+    <li>Set <code>CAN1-&gt;IER |= CAN_IER_FMPIE0</code> to request an interrupt when FIFO0 becomes non-empty.</li>
+    <li>Set the NVIC priority and enable <code>CAN1_RX0_IRQn</code>.</li>
+    <li>Put <code>CAN1_RX0_IRQHandler</code> in the startup vector slot for IRQ 20. This repository’s startup file now does that.</li>
+  </ol>
+  <pre><code>CAN1-&gt;IER |= CAN_IER_FMPIE0;
+NVIC_SetPriority(CAN1_RX0_IRQn, 6U);
+NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
-      <div class="code-block" style="margin-top: 16px;">
-        <pre>Example of the core idea in C:
-CAN1-&gt;MCR |= CAN_MCR_INRQ;   // enter initialization mode
-CAN1-&gt;BTR = ...;            // configure bit timing
-prvCanConfigureRxFilter();  // accept incoming frames
-CAN1-&gt;MCR &= ~CAN_MCR_INRQ;  // leave initialization mode</pre>
-      </div>
-    </section>
-
-    <section class="section" id="freertos-usage">
-      <h2>7. Using CAN in FreeRTOS</h2>
-      <p>
-        The CAN implementation in this project is intentionally split into FreeRTOS tasks. That makes the firmware more organized, easier to reason about, and safer than placing all CAN I/O directly in the main loop.
-      </p>
-
-      <div class="card">
-        <h3>Why tasks help</h3>
-        <ul class="hero-list">
-          <li>Keep the main function simple</li>
-          <li>Avoid blocking the whole firmware while waiting for a mailbox or FIFO state</li>
-          <li>Separate transmit and receive activity into dedicated tasks</li>
-          <li>Make debugging and timing analysis easier</li>
-        </ul>
-      </div>
-
-      <div class="card" style="margin-top: 16px;">
-        <h3>Recommended task structure</h3>
-        <pre>Task A: periodic transmit task
-Task B: periodic receive task
-Task C: application logic / state machine
-Task D: LED or diagnostics task</pre>
-      </div>
-
-      <div class="card" style="margin-top: 16px;">
-        <h3>Transmit task pattern</h3>
-        <pre>static void CanTxTask_250ms(void *pvParameters) {
-    TickType_t lastWake = xTaskGetTickCount();
-    const TickType_t period = pdMS_TO_TICKS(250);
-
-    for (;;) {
-        prvCanTransmitStdFrame(0x123, payload, 8);
-        vTaskDelayUntil(&lastWake, period);
+void CAN1_RX0_IRQHandler(void) {
+    while (CAN1-&gt;RF0R &amp; CAN_RF0R_FMP0) {
+        /* read RIR/RDTR/RDLR/RDHR; copy to application storage */
+        CAN1-&gt;RF0R |= CAN_RF0R_RFOM0;
     }
-}</pre>
-      </div>
+}</code></pre>
+  <div class="note">The ISR in this project does not call FreeRTOS. If you later call <code>xQueueSendFromISR()</code>, set the interrupt priority to a numerically equal-or-lower urgency than <code>configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY</code> and use the FreeRTOS “FromISR” APIs exclusively.</div>
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Receive task pattern</h3>
-        <pre>static void CanRxTask_100ms(void *pvParameters) {
-    TickType_t lastWake = xTaskGetTickCount();
-    const TickType_t period = pdMS_TO_TICKS(100);
+  <h2 id="application">10. Use the received data in application code</h2>
+  <p><a href="../inc/can1.h"><code>inc/can1.h</code></a> defines <code>Can1RxFrame</code>, the volatile latest-frame storage, and a coherent-copy function. Do not copy the volatile structure field-by-field yourself: an interrupt can update it during that copy.</p>
+  <pre><code>#include "can1.h"
+
+static void ApplicationTask(void *argument) {
+    Can1RxFrame frame;
+    (void)argument;
 
     for (;;) {
-        while ((CAN1-&gt;RF0R & CAN_RF0R_FMP0) != 0U) {
-            // read FIFO frame
-            // store ID, DLC, and payload
-            // release FIFO mailbox
+        if (Can1CopyLatestRxFrame(&amp;frame) == 0) {
+            // frame.id is 0x321, frame.dlc is 0..8,
+            // frame.data[0..frame.dlc-1] is the payload,
+            // frame.count increases for each received matching frame.
         }
-        vTaskDelayUntil(&lastWake, period);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
-}</pre>
-      </div>
+}</code></pre>
+  <p><code>Can1CopyLatestRxFrame()</code> returns <code>-2</code> until the first matching frame arrives and <code>-1</code> for a null destination. It uses an update sequence counter, so it retries if the receive interrupt changes the frame mid-copy.</p>
 
-      <div class="callout">
-        <strong>Scheduling rule of thumb:</strong> keep CAN tasks periodic, short, and predictable. Avoid long blocking loops inside the CAN tasks unless the design explicitly requires them.
-      </div>
-    </section>
+  <h2 id="tools">11. Test with the repository USB-CAN tools</h2>
+  <p>The scripts use <a href="https://python-can.readthedocs.io/">python-can</a>. Install it once with <code>python3 -m pip install python-can</code>. Adjust the adapter path if it differs from the example.</p>
+  <pre><code># Terminal A: watch only what the STM32 accepts (0x321)
+python3 canalyzer_tool/read_can.py --channel /dev/cu.usbmodemAAAD204938841 --id 0x321
 
-    <section class="section" id="troubleshooting">
-      <h2>8. Troubleshooting and best practices</h2>
-      <div class="two-col">
-        <div class="card">
-          <h3>Common symptoms</h3>
-          <ul class="hero-list">
-            <li>No traffic appears at all -> likely missing transceiver or wrong pins</li>
-            <li>Frames transmit but never ACK -> bus termination or grounding issue</li>
-            <li>Frames are received inconsistently -> wrong bit timing or poor wiring</li>
-            <li>Receive FIFO never fills -> filter configuration too restrictive</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Practical checks</h3>
-          <ul class="hero-list">
-            <li>Confirm your transceiver wiring and power</li>
-            <li>Verify 120 ohm termination at the bus ends</li>
-            <li>Confirm the CAN bit timing matches the bus</li>
-            <li>Use a logic analyzer or CAN dongle for debugging</li>
-            <li>Inspect the receive and transmit status bits</li>
-          </ul>
-        </div>
-      </div>
+# Terminal B: prompted for adapter path, bitrate, ID, and payload
+python3 canalyzer_tool/send_can.py
 
-      <div class="card" style="margin-top: 16px;">
-        <h3>Best practices</h3>
-        <ul class="hero-list">
-          <li>Start with a simple standard frame and a single known ID</li>
-          <li>Use 500 kbps or 1 Mbps for early experiments</li>
-          <li>Keep payload sizes small and fixed</li>
-          <li>Do not mix too many responsibilities inside the same task</li>
-          <li>Prefer queues for passing received CAN data to application tasks</li>
-        </ul>
-      </div>
-    </section>
+# Or send without prompts
+python3 canalyzer_tool/send_can.py --channel /dev/cu.usbmodemAAAD204938841 \
+    --bitrate 500000 --id 0x321 --data "DE AD BE EF 01 02 03 04"</code></pre>
+  <p><code>read_can.py</code> now accepts interface, channel, bitrate, identifier, and extended-frame options. <code>send_can.py</code> validates an 11-bit standard ID by default, accepts up to eight hexadecimal data bytes, and supports an explicit <code>--extended</code> mode.</p>
 
-    <section class="section" id="quick-reference">
-      <h2>9. Quick reference</h2>
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Topic</th>
-              <th>Recommended starting point</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Bus speed</td><td>500 kbps</td></tr>
-            <tr><td>Identifier</td><td>11-bit standard ID</td></tr>
-            <tr><td>Payload size</td><td>Up to 8 bytes</td></tr>
-            <tr><td>Termination</td><td>120 ohm at each end of the bus</td></tr>
-            <tr><td>STM32 pins</td><td>PB8/PB9 for CAN1</td></tr>
-            <tr><td>Transceiver</td><td>MCP2551, SN65HVD230, TJA1050, or similar</td></tr>
-            <tr><td>FreeRTOS pattern</td><td>one transmit task + one receive task</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+  <h2 id="test">12. End-to-end bring-up checklist</h2>
+  <ol>
+    <li>Build: <code>make clean &amp;&amp; make</code>; flash the generated ELF.</li>
+    <li>Confirm PB9 shows a 500 kbit/s waveform every 250 ms. The demo sends standard data ID <code>0x123</code>, DLC 8.</li>
+    <li>Connect a powered, non-standby transceiver and an ACK-capable USB-CAN adapter at 500 kbit/s.</li>
+    <li>Run the receive tool to observe the STM32’s <code>0x123</code> traffic.</li>
+    <li>Use <code>send_can.py</code> to send <code>0x321</code>. PD15 toggles for each accepted frame.</li>
+    <li>In a debugger, inspect <code>g_can1_rx_latest</code> or call <code>Can1CopyLatestRxFrame()</code>.</li>
+    <li>Send another ID, for example <code>0x322</code>; the count must not change. That proves the hardware filter is active.</li>
+  </ol>
 
-    <section class="section">
-      <h2>10. Final thoughts</h2>
-      <p>
-        CAN is one of the most useful communication protocols in embedded systems because it gives you robust, shared, multi-node messaging with surprisingly simple wiring. Once you understand the basics of arbitration, ACK, CRC, filtering, and timing, you can build reliable systems that scale from a single board to a full distributed control network.
-      </p>
-      <p>
-        For this STM32F407 project, the current implementation already provides a practical foundation: transmit a standard frame, receive frames into FIFO0, and coordinate both activities from FreeRTOS tasks. That is enough to start experimenting, learning, and then evolving the design into a more production-ready driver.
-      </p>
-    </section>
-  </div>
+  <h2 id="registers">13. bxCAN register reference for this project</h2>
+  <table><thead><tr><th>Register</th><th>Used bits</th><th>Reason</th></tr></thead><tbody>
+    <tr><td><code>MCR</code></td><td>INRQ, SLEEP, NART, ABOM, TXFP</td><td>Mode control; no auto retry for analyzer testing; auto recovery; mailbox request order.</td></tr>
+    <tr><td><code>MSR</code></td><td>INAK, SLAK</td><td>Confirm initialization and sleep transitions.</td></tr>
+    <tr><td><code>BTR</code></td><td>BRP, TS1, TS2, SJW, LBKM, SILM</td><td>Nominal bitrate/sample point; keep LBKM/SILM clear for normal bus operation.</td></tr>
+    <tr><td><code>TSR</code></td><td>TME0, RQCP0, TXOK0, ALST0, TERR0</td><td>Mailbox availability and the outcome of a requested transmission.</td></tr>
+    <tr><td><code>TI0R/TDTR/TDLR/TDHR</code></td><td>ID/control, DLC, payload</td><td>One complete transmit mailbox.</td></tr>
+    <tr><td><code>FMR</code></td><td>FINIT, CAN2SB</td><td>Enter filter configuration and assign banks to CAN1/CAN2.</td></tr>
+    <tr><td><code>FM1R/FS1R/FFA1R/FA1R</code></td><td>FBM0, FSC0, FFA0, FACT0</td><td>Filter mode, width, FIFO destination, and activation.</td></tr>
+    <tr><td><code>FR1/FR2</code></td><td>filter value/mask</td><td>Match exactly standard data ID 0x321.</td></tr>
+    <tr><td><code>RF0R</code></td><td>FMP0, FULL0, FOVR0, RFOM0</td><td>FIFO depth, overflow diagnosis, and release of each entry.</td></tr>
+    <tr><td><code>RIR/RDTR/RDLR/RDHR</code></td><td>ID, DLC, payload</td><td>The front entry of FIFO0.</td></tr>
+    <tr><td><code>IER</code></td><td>FMPIE0</td><td>Generate CAN1_RX0 IRQ when FIFO0 becomes non-empty.</td></tr>
+    <tr><td><code>ESR</code></td><td>LEC, TEC, REC, BOFF, EPVF, EWGF</td><td>Diagnose bus errors, error-passive state, and bus-off.</td></tr>
+  </tbody></table>
+  <p>Use the official <a href="https://www.st.com/resource/en/reference_manual/dm00031020.pdf">STM32F4 RM0090 reference manual</a> as the electrical/register authority. The steps above are the focused sequence needed for this project.</p>
+
+  <h2 id="troubleshooting">14. Failure patterns and fixes</h2>
+  <table><thead><tr><th>Symptom</th><th>Most likely cause</th><th>Check</th></tr></thead><tbody>
+    <tr><td>No PB9 waveform</td><td>GPIO AF or CAN mode setup missing</td><td>GPIOB clock, MODER=AF, AFRH=AF9, CAN1 clock, INAK clears.</td></tr>
+    <tr><td>Analyzer cannot decode PB9</td><td>Wrong bitrate or prior BTR off-by-one</td><td>Use 500 kbit/s; verify PCLK1 and BTR fields.</td></tr>
+    <tr><td>Repeated bursts instead of one frame/250 ms</td><td>No ACK with automatic retransmission</td><td>Use another CAN node or enable NART for the analyzer-only test.</td></tr>
+    <tr><td>TX error / bus-off</td><td>No ACK, wiring fault, bitrate mismatch</td><td>Inspect ESR.LEC/TEC/BOFF; verify transceiver and termination.</td></tr>
+    <tr><td>PB9 works but PB8 is idle</td><td>No transceiver RXD activity</td><td>PB8 is RX only; check transceiver power/mode and bus traffic.</td></tr>
+    <tr><td>0x321 does not arrive in storage</td><td>Filter, interrupt, or vector table issue</td><td>Confirm FR1/FR2, FMPIE0, NVIC enable, and IRQ20 vector.</td></tr>
+    <tr><td>FIFO overflow</td><td>ISR blocked too long or traffic exceeds storage policy</td><td>Inspect RF0R.FOVR0; make the ISR short or use a ring buffer/queue.</td></tr>
+    <tr><td>Frames from every ID appear</td><td>FR2 mask is zero</td><td>In mask mode zero means “don’t care”; set ID and IDE/RTR mask bits.</td></tr>
+  </tbody></table>
+
+  <h2>15. What to change next</h2>
+  <ul>
+    <li>Change <code>CAN_RX_STD_ID</code> in <a href="../src/main.c"><code>src/main.c</code></a> and rebuild to select another standard data-frame ID.</li>
+    <li>For several received IDs, allocate extra filter banks or replace the latest-frame store with a FreeRTOS queue.</li>
+    <li>For error handling, enable CAN error interrupts and record <code>ESR</code>.</li>
+    <li>For a production transmitter, choose an explicit retry/error policy instead of using the analyzer-oriented NART configuration.</li>
+  </ul>
+</main>
 </body>
 </html>

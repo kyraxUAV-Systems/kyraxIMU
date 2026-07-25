@@ -50,6 +50,10 @@ void DMA1_Stream4_handler         (void)__attribute__((weak, alias("Default_hand
 void DMA1_Stream5_handler         (void)__attribute__((weak, alias("Default_handler")));
 void DMA1_Stream6_handler         (void)__attribute__((weak, alias("Default_handler")));
 void ADC_handler                  (void)__attribute__((weak, alias("Default_handler")));
+void CAN1_TX_IRQHandler           (void)__attribute__((weak, alias("Default_handler")));
+void CAN1_RX0_IRQHandler          (void)__attribute__((weak, alias("Default_handler")));
+void CAN1_RX1_IRQHandler          (void)__attribute__((weak, alias("Default_handler")));
+void CAN1_SCE_IRQHandler          (void)__attribute__((weak, alias("Default_handler")));
 void EXTI9_5__handler             (void)__attribute__((weak, alias("Default_handler")));
 void TIM1_BRK_TIM9_handler        (void)__attribute__((weak, alias("Default_handler")));
 void TIM1_UP_TIM10_handler        (void)__attribute__((weak, alias("Default_handler")));
@@ -126,10 +130,10 @@ void (* const fpn_vector[])(void) = {
     DMA1_Stream5_handler,
     DMA1_Stream6_handler,
     ADC_handler,
-    0,
-    0,
-    0,
-    0,
+    CAN1_TX_IRQHandler,
+    CAN1_RX0_IRQHandler,
+    CAN1_RX1_IRQHandler,
+    CAN1_SCE_IRQHandler,
     EXTI9_5__handler,
     TIM1_BRK_TIM9_handler,
     TIM1_UP_TIM10_handler,
