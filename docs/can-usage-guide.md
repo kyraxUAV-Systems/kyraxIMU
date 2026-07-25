@@ -66,15 +66,17 @@ The default configuration in this implementation is:
 - Frame type: standard identifier (11-bit ID)
 - Default transmit ID: 0x123
 - Default payload size: 8 bytes
-- Bit timing assumption: 16 MHz system clock, 500 kbit/s
+- Bit timing assumption: 16 MHz APB1 clock, 500 kbit/s
 
 The important timing values are configured in the CAN1 bit timing register:
 
-- BRP = 1
-- TS1 = 12
-- TS2 = 2
+- BRP register field = 1 (actual prescaler = 2)
+- TS1 register field = 12 (actual segment = 13 time quanta)
+- TS2 register field = 1 (actual segment = 2 time quanta)
 
-This is a practical starting point for a 500 kbit/s bus when the STM32F407 is running from a 16 MHz clock domain in the project’s current setup.
+bxCAN timing fields are encoded as the programmed value plus one.  The resulting
+bit time is `2 * (1 + 13 + 2) = 32` APB1 clock cycles, so a 16 MHz APB1 clock
+produces exactly 500 kbit/s with an 87.5% sample point.
 
 If your clock configuration differs, you may need to recalculate the bit timing. The most common values to adjust are:
 
@@ -126,6 +128,24 @@ static void CanTxTask_250ms(void *pvParameters) {
 - Keep the transmit operation short and deterministic.
 - Avoid writing large amounts of application logic directly inside the transmit task.
 - If you need to send frames from multiple parts of the firmware, use a queue or a small message buffer so that the CAN task is the only place that touches the bxCAN mailbox registers.
+- The transmit request bit is deliberately written last. On bxCAN, writing `TXRQ`
+  starts transmission immediately; writing it before the DLC and data registers can
+  send stale mailbox contents.
+- The demo enables `NART` (no automatic retransmission) and `ABOM` (automatic
+  bus-off recovery). This makes a single transmission attempt every 250 ms even
+  when only a logic analyzer is attached and no CAN node can provide an ACK.
+
+### What a logic analyzer should show
+
+Probe **PB9** to observe the MCU's 3.3 V `CAN1_TX` signal and configure the
+digital CAN decoder for **500 kbit/s**. PB8 is `CAN1_RX`; it is an input and
+will show activity only when the connected CAN transceiver drives its RXD output.
+
+A logic analyzer does not acknowledge CAN frames. With only the analyzer
+connected, each 250 ms transmission is visible on PB9 but ends with an ACK error,
+which is expected. To decode a clean, acknowledged CAN frame, use a CAN
+transceiver, a correctly terminated CANH/CANL bus, and a second active CAN node
+or USB-CAN adapter at 500 kbit/s.
 
 ## How to use the receive functionality
 

@@ -160,22 +160,22 @@ static void BlinkTask_2000ms(void *pvParameters) {
     }
 }
 
-/* Transmit a basic CAN frame on mailbox 0 */
+/* Transmit a basic CAN frame on mailbox 0. */
 /* Define a helper that writes a standard CAN frame into transmit mailbox 0. */
 static int32_t prvCanTransmitStdFrame(uint32_t std_id, const uint8_t *payload, uint8_t dlc) {
     /* Allocate temporary variables for the low and high data words of the frame payload. */
     uint32_t tx_l, tx_h;
 
-    /* Reject null payload pointers or oversized payload lengths before touching the peripheral. */
-    if ((payload == NULL) || (dlc > CAN_DLC)) {
+    /* Reject null payload pointers, invalid standard IDs, or oversized payloads. */
+    if ((payload == NULL) || (std_id > 0x7FFU) || (dlc > CAN_DLC)) {
         /* Return an error code when the caller provided invalid data. */
         return -1;
     }
 
-    /* Wait until transmit mailbox 0 is free before loading a new frame. */
-    while ((CAN1->TSR & CAN_TSR_TME0) == 0U) {
-        /* Busy-wait until mailbox 0 becomes available for a new transmission. */
-        ;
+    /* Do not block the periodic task if the previous frame is still pending. */
+    if ((CAN1->TSR & CAN_TSR_TME0) == 0U) {
+        /* Tell the caller that mailbox 0 is still occupied. */
+        return -2;
     }
 
     /* Pack the first four payload bytes into the low data register word. */
@@ -195,14 +195,20 @@ static int32_t prvCanTransmitStdFrame(uint32_t std_id, const uint8_t *payload, u
            /* Pack payload byte 7 into the high data word. */
            ((uint32_t)payload[7] << 24U);
 
-    /* Load the mailbox identifier register with the standard identifier and request bit. */
-    CAN1->sTxMailBox[0].TIR = (std_id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
+    /*
+     * Load the complete mailbox before requesting transmission.  TXRQ starts
+     * transmission immediately, so it must be the final mailbox write.
+     */
+    CAN1->sTxMailBox[0].TIR = (std_id << CAN_TI0R_STID_Pos);
     /* Load the mailbox data-length register with the requested DLC. */
     CAN1->sTxMailBox[0].TDTR = dlc;
     /* Load the low payload word into the transmit data low register. */
     CAN1->sTxMailBox[0].TDLR = tx_l;
     /* Load the high payload word into the transmit data high register. */
     CAN1->sTxMailBox[0].TDHR = tx_h;
+
+    /* Request transmission only after ID, DLC, and both data words are valid. */
+    CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
 
     /* Return success to the caller after the mailbox has been armed. */
     return 0;
@@ -328,6 +334,8 @@ static void CanRxTask_100ms(void *pvParameters) {
 static void prvSetupHardware(void) {
     /* Enable the GPIOB clock used by the CAN1 RX/TX pins and the GPIOD clock used by the LED outputs. */
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOBEN; /* enable GPIOD and GPIOB clocks */
+    /* Read back the register to ensure the GPIO clocks are active before use. */
+    (void)RCC->AHB1ENR;
 
     /* Configure the LED output pins PD12 through PD15 as push-pull outputs. */
     for (uint32_t pin = 12; pin <= 15; pin++) {
@@ -344,6 +352,7 @@ static void prvSetupHardware(void) {
     /* Keep the CAN pins in push-pull output mode for the alternate-function driver. */
     GPIOB->OTYPER &= ~((1U << 8U) | (1U << 9U));
     /* Set the GPIO speed for PB8 and PB9 to the highest supported level. */
+    GPIOB->OSPEEDR &= ~((3U << (8U * MODER_WIDTH)) | (3U << (9U * MODER_WIDTH)));
     GPIOB->OSPEEDR |= ((3U << (8U * MODER_WIDTH)) | (3U << (9U * MODER_WIDTH)));
     /* Clear any pull-up or pull-down settings on the CAN pins. */
     GPIOB->PUPDR &= ~((3U << (8U * MODER_WIDTH)) | (3U << (9U * MODER_WIDTH)));
@@ -352,8 +361,18 @@ static void prvSetupHardware(void) {
     /* Apply the alternate-function 9 selection to the relevant AFR bits. */
     GPIOB->AFR[1] |= ((0x9U << ((8U - 8U) * 4U)) | (0x9U << ((9U - 8U) * 4U)));
 
-    /* Enable the CAN1 peripheral clock. */
+    /* Enable and reset the CAN1 peripheral so its state is known. */
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+    (void)RCC->APB1ENR;
+    RCC->APB1RSTR |= RCC_APB1RSTR_CAN1RST;
+    RCC->APB1RSTR &= ~RCC_APB1RSTR_CAN1RST;
+
+    /* Wake bxCAN before requesting initialization mode. */
+    CAN1->MCR &= ~CAN_MCR_SLEEP;
+    while ((CAN1->MSR & CAN_MSR_SLAK) != 0U) {
+        /* Wait until the peripheral acknowledges wake-up. */
+        ;
+    }
 
     /* Request initialization mode for CAN1 before reprogramming its timing and filters. */
     CAN1->MCR |= CAN_MCR_INRQ;
@@ -363,15 +382,25 @@ static void prvSetupHardware(void) {
         ;
     }
 
-    /* 16 MHz clock, 500 kbit/s: BRP=1, TS1=12, TS2=2 */
-    /* Program the CAN bit timing register for a 500 kbit/s nominal baud rate. */
+    /*
+     * APB1 is 16 MHz after reset.  bxCAN stores each timing value minus one:
+     * BRP field 1 = prescaler 2, TS1 field 12 = 13 TQ, TS2 field 1 = 2 TQ.
+     * 16 MHz / (2 * (1 + 13 + 2)) = 500 kbit/s, sample point = 87.5%.
+     */
     CAN1->BTR = (1U << CAN_BTR_BRP_Pos) |
                 /* Program the time-segment 1 field for the selected bit timing. */
                 (12U << CAN_BTR_TS1_Pos) |
                 /* Program the time-segment 2 field for the selected bit timing. */
-                (2U << CAN_BTR_TS2_Pos);
+                (1U << CAN_BTR_TS2_Pos);
     /* Program the CAN receive filter bank so standard frames are accepted into FIFO0. */
     prvCanConfigureRxFilter();
+    /*
+     * Send only one frame attempt per task period.  An analyzer is not a CAN
+     * receiver and cannot ACK; disabling automatic retransmission prevents a
+     * missing ACK from turning one scheduled frame into repeated traffic.
+     */
+    CAN1->MCR |= CAN_MCR_NART | CAN_MCR_ABOM | CAN_MCR_TXFP;
+
     /* Exit initialization mode so the CAN peripheral can start participating on the bus. */
     CAN1->MCR &= ~CAN_MCR_INRQ;
     /* Wait until CAN1 leaves initialization mode and becomes active. */
@@ -380,8 +409,6 @@ static void prvSetupHardware(void) {
         ;
     }
 
-    /* Enable transmit FIFO priority so the mailbox with the earliest request is served first. */
-    CAN1->MCR |= CAN_MCR_TXFP;
 }
 
 /**
